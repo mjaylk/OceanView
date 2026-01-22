@@ -13,4 +13,6 @@ public interface UserDAO {
     boolean update(User user);     
     boolean updatePassword(int id, String passwordHash);
     boolean deactivate(int id);  
+    boolean delete(int id);
+
 }

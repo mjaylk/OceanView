@@ -3,8 +3,11 @@ package com.oceanview.service;
 import com.oceanview.dao.UserDAO;
 import com.oceanview.dao.impl.UserDAOImpl;
 import com.oceanview.model.User;
+import com.oceanview.util.DatabaseConnection;
 import com.oceanview.util.PasswordUtil;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 public class UserService {
@@ -92,4 +95,11 @@ public class UserService {
         System.out.println("=== UserService.deactivateUser() END ===");
         return result;
     }
+    
+    public boolean deleteUser(int id) {
+        System.out.println("UserService.deleteUser(" + id + ")");
+        return userDAO.delete(id);
+    }
+
+
 }

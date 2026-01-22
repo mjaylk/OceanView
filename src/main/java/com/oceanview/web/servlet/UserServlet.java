@@ -6,8 +6,13 @@ import com.oceanview.util.JsonUtil;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @WebServlet("/api/users")
 public class UserServlet extends HttpServlet {
@@ -18,29 +23,15 @@ public class UserServlet extends HttpServlet {
     @Override
     public void init() {
         userService = new UserService();
-        System.out.println("TEST CASE 0: UserServlet initialized");
+        System.out.println("UserServlet initialized");
     }
 
-    // --------------------------
-    // AUTHORIZATION (ADMIN ONLY)
-    // --------------------------
     private boolean isAdmin(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-
-        if (session == null) {
-            System.out.println("TEST CASE 1: No session found");
-            return false;
-        }
-
+        if (session == null) return false;
         User user = (User) session.getAttribute("user");
-        if (user == null) {
-            System.out.println("TEST CASE 2: No user in session");
-            return false;
-        }
-
-        boolean admin = "ADMIN".equalsIgnoreCase(user.getRole());
-        System.out.println("TEST CASE 3: user=" + user.getUsername() + ", role=" + user.getRole() + ", isAdmin=" + admin);
-        return admin;
+        if (user == null) return false;
+        return "ADMIN".equalsIgnoreCase(user.getRole());
     }
 
     private void sendJson(HttpServletResponse resp, int status, String json) throws IOException {
@@ -51,7 +42,6 @@ public class UserServlet extends HttpServlet {
     }
 
     private void denyAdminOnly(HttpServletResponse resp) throws IOException {
-        System.out.println("TEST CASE X: Access denied (Admin only)");
         sendJson(resp, HttpServletResponse.SC_FORBIDDEN,
                 "{\"success\":false,\"message\":\"Admin only\"}");
     }
@@ -71,158 +61,158 @@ public class UserServlet extends HttpServlet {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    // --------------------------
-    // GET /api/users  (List users)
-    // --------------------------
+    private Map<String, Object> readJsonBody(HttpServletRequest req) throws IOException {
+        String contentType = req.getContentType();
+        if (contentType == null || !contentType.contains("application/json")) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try (BufferedReader reader = req.getReader()) {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+        }
+
+        String json = sb.toString().trim();
+        System.out.println("Raw JSON: " + json);
+
+        if (json.isEmpty()) return null;
+
+        Map<String, Object> map = new HashMap<>();
+        
+        Pattern pattern = Pattern.compile("\"([^\"]+)\"\\s*:\\s*(\"([^\"]*)\"|(\\d+))");
+        Matcher matcher = pattern.matcher(json);
+        
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            String value = matcher.group(3) != null ? matcher.group(3) : matcher.group(4);
+            if ("userId".equals(key)) {
+                map.put(key, toInt(value));
+            } else {
+                map.put(key, value);
+            }
+        }
+        
+        System.out.println("Parsed map: " + map);
+        return map.isEmpty() ? null : map;
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        System.out.println("TEST CASE 4: GET /api/users called");
-
         if (!isAdmin(req)) {
             denyAdminOnly(resp);
             return;
         }
 
         List<User> users = userService.listUsers();
-        System.out.println("TEST CASE 5: Users count=" + users.size());
 
-        // Build JSON output (do not expose password hash)
         StringBuilder sb = new StringBuilder();
         sb.append("{\"success\":true,\"users\":[");
-
         for (int i = 0; i < users.size(); i++) {
             User u = users.get(i);
-
             sb.append("{")
               .append("\"userId\":").append(u.getUserId()).append(",")
               .append("\"username\":\"").append(esc(u.getUsername())).append("\",")
               .append("\"role\":\"").append(esc(u.getRole())).append("\",")
               .append("\"status\":\"").append(esc(u.getStatus())).append("\"")
               .append("}");
-
             if (i < users.size() - 1) sb.append(",");
         }
-
         sb.append("]}");
         sendJson(resp, HttpServletResponse.SC_OK, sb.toString());
     }
 
-    // --------------------------
-    // POST /api/users  (Create user)
-    // --------------------------
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        System.out.println("TEST CASE 11: POST /api/users called");
-
         if (!isAdmin(req)) {
-            System.out.println("TEST CASE 12: POST denied - not admin");
             denyAdminOnly(resp);
             return;
         }
 
-        Map<String, Object> body = JsonUtil.readJson(req);
+        Map<String, Object> body = readJsonBody(req);
+        if (body == null) {
+            sendJson(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "{\"success\":false,\"message\":\"Invalid JSON\"}");
+            return;
+        }
 
         String username = (String) body.get("username");
         String password = (String) body.get("password");
-        String role     = (String) body.get("role");
-
-        System.out.println("TEST CASE 13: Create user username=" + username + ", role=" + role);
+        String role = (String) body.get("role");
 
         try {
             int id = userService.createUser(username, password, role);
-            System.out.println("TEST CASE 14: Created userId=" + id);
-
             sendJson(resp, HttpServletResponse.SC_CREATED,
                     "{\"success\":true,\"userId\":" + id + "}");
-
         } catch (IllegalArgumentException ex) {
-            System.out.println("TEST CASE 15: Create failed: " + ex.getMessage());
-
             sendJson(resp, HttpServletResponse.SC_BAD_REQUEST,
                     "{\"success\":false,\"message\":\"" + esc(ex.getMessage()) + "\"}");
         }
     }
 
-    // --------------------------
-    // PUT /api/users  (Update user + optional reset password)
-    // --------------------------
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        System.out.println("TEST CASE 16: PUT /api/users called");
-
         if (!isAdmin(req)) {
-            System.out.println("TEST CASE 16A: PUT denied - not admin");
             denyAdminOnly(resp);
             return;
         }
 
-        Map<String, Object> body = JsonUtil.readJson(req);
+        Map<String, Object> body = readJsonBody(req);
+        if (body == null) {
+            sendJson(resp, HttpServletResponse.SC_BAD_REQUEST,
+                    "{\"success\":false,\"message\":\"Invalid JSON\"}");
+            return;
+        }
 
         Integer userId = toInt(body.get("userId"));
         String username = (String) body.get("username");
-        String role     = (String) body.get("role");
-        String status   = (String) body.get("status");
+        String role = (String) body.get("role");
+        String status = (String) body.get("status");
         String newPassword = (String) body.get("newPassword");
 
-        System.out.println("TEST CASE 17: Update request userId=" + userId);
+        System.out.println("PUT: userId=" + userId + ", username=" + username);
 
         if (userId == null) {
-            System.out.println("TEST CASE 17A: Invalid userId");
             sendJson(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    "{\"success\":false,\"message\":\"userId is required\"}");
+                    "{\"success\":false,\"message\":\"userId required\"}");
             return;
         }
 
         try {
             userService.updateUser(userId, username, role, status);
-
-            if (newPassword != null && !newPassword.isBlank()) {
+            if (newPassword != null && !newPassword.trim().isEmpty()) {
                 userService.resetPassword(userId, newPassword);
-                System.out.println("TEST CASE 18: Password reset done for userId=" + userId);
             }
-
-            System.out.println("TEST CASE 19: Update success");
-            sendJson(resp, HttpServletResponse.SC_OK,
-                    "{\"success\":true}");
-
+            sendJson(resp, HttpServletResponse.SC_OK, "{\"success\":true}");
         } catch (IllegalArgumentException ex) {
-            System.out.println("TEST CASE 20: Update failed: " + ex.getMessage());
-
             sendJson(resp, HttpServletResponse.SC_BAD_REQUEST,
                     "{\"success\":false,\"message\":\"" + esc(ex.getMessage()) + "\"}");
         }
     }
 
-    // --------------------------
-    // DELETE /api/users?id=5  (Deactivate user)
-    // --------------------------
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        System.out.println("TEST CASE 21: DELETE /api/users called");
-
         if (!isAdmin(req)) {
-            System.out.println("TEST CASE 21A: DELETE denied - not admin");
             denyAdminOnly(resp);
             return;
         }
 
         String idStr = req.getParameter("id");
-        System.out.println("TEST CASE 22: Deactivate id param=" + idStr);
-
         Integer id = null;
-        try { id = Integer.parseInt(idStr); } catch (Exception ignored) {}
+        try { 
+            id = Integer.parseInt(idStr); 
+        } catch (Exception ignored) {}
 
         if (id == null) {
-            System.out.println("TEST CASE 22A: Invalid id parameter");
             sendJson(resp, HttpServletResponse.SC_BAD_REQUEST,
-                    "{\"success\":false,\"message\":\"Valid id query param required\"}");
+                    "{\"success\":false,\"message\":\"Valid id required\"}");
             return;
         }
 
-        boolean ok = userService.deactivateUser(id);
-        System.out.println("TEST CASE 23: Deactivate result=" + ok);
-
-        sendJson(resp, HttpServletResponse.SC_OK,
-                "{\"success\":" + ok + "}");
+        boolean ok = userService.deleteUser(id);
+        sendJson(resp, HttpServletResponse.SC_OK, "{\"success\":" + ok + "}");
     }
+
 }

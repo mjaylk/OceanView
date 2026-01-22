@@ -11,43 +11,37 @@ import java.io.IOException;
 public class AuthServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-	private final AuthService authService = new AuthService();
+    private final AuthService authService = new AuthService();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        System.out.println("AuthServlet doPost called");
 
-        System.out.println(">>> AuthServlet running");
-
+        req.setCharacterEncoding("UTF-8");
         String username = req.getParameter("username");
         String password = req.getParameter("password");
 
-        User user = authService.login(username, password);
+        System.out.println("Login attempt: " + username);
 
-        //  Login failed → back to login
+        User user = authService.login(username, password);
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login.html?error=1");
             return;
         }
 
-        // Login success → store user in session
         HttpSession session = req.getSession(true);
         session.setAttribute("user", user);
+        System.out.println("Session created for " + user.getUsername() + " (Role: " + user.getRole() + ")");
 
-        // ROLE-WISE REDIRECT
-        String role = user.getRole();
+        String ctxPath = req.getContextPath();
+        String role = user.getRole().toUpperCase();
 
-        if ("ADMIN".equalsIgnoreCase(role)) {
-            resp.sendRedirect(req.getContextPath() + "/admin.html");
-        } 
-        else if ("STAFF".equalsIgnoreCase(role)) {
-            resp.sendRedirect(req.getContextPath() + "/staff.html");
-        } 
-        else if ("GUEST".equalsIgnoreCase(role)) {
-            resp.sendRedirect(req.getContextPath() + "/guest.html");
-        } 
-        else {
-            // fallback safety
-            resp.sendRedirect(req.getContextPath() + "/login.html");
+        if ("ADMIN".equals(role)) {
+            resp.sendRedirect(ctxPath + "/admin.html");
+        } else if ("STAFF".equals(role)) {
+            resp.sendRedirect(ctxPath + "/staff.html");
+        } else {
+            resp.sendRedirect(ctxPath + "/guest.html");
         }
     }
 }
