@@ -187,7 +187,7 @@ function showAlert(type, msg, level = 'danger') {
     alert.className = `alert alert-${level} alert-dismissible fade show`;
     msgSpan.textContent = msg;
     
-    // Auto-hide success messages
+    // Auto hide success messages
     if (level === 'success') {
         setTimeout(() => hideAlert(type), 3000);
     }
@@ -324,7 +324,7 @@ function editRoom(room) {
     
     hideAlert('room');
     updateFormMode(true);
-    // Scroll to form
+
     document.getElementById("roomForm").scrollIntoView({ behavior: 'smooth' });
 }
 

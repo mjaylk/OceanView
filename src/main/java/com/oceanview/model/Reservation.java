@@ -15,7 +15,7 @@ public class Reservation {
     private String status;
     private int createdBy;
 
-    // OPTIONAL display fields (not required to insert)
+  
     private String guestName;
     private String guestEmail;
     private String roomNumber;

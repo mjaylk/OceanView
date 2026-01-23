@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-public class AuthFilter implements Filter {  // NO @WebFilter
+public class AuthFilter implements Filter {  
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 

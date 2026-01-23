@@ -46,7 +46,7 @@ public class ReservationService {
             String status,
             int createdBy
     ) {
-        // ---- server validation ----
+        // server validation 
         if (roomId <= 0) throw new IllegalArgumentException("Room is required");
         if (checkIn == null || checkOut == null) throw new IllegalArgumentException("Check-in/out required");
         if (checkOut.compareTo(checkIn) <= 0) throw new IllegalArgumentException("Check-out must be after check-in");
@@ -59,18 +59,18 @@ public class ReservationService {
             throw new IllegalArgumentException("Invalid status");
         }
 
-        // ---- ensure guest exists ----
+        // ensure guest exists
         if (guestId <= 0) {
             guestId = guestService.ensureGuest(guestName, guestEmail, guestContactNumber);
         }
 
-        // ---- overlap check ----
+        //  overlap check 
         boolean overlap = dao.hasOverlappingReservation(roomId, checkIn, checkOut);
         if (overlap) {
             throw new IllegalArgumentException("Selected dates overlap with an existing reservation.");
         }
 
-        // ---- create reservation number ----
+        //  create reservation number
         String number = generateReservationNumber(checkIn);
 
         Reservation r = new Reservation();
@@ -88,7 +88,7 @@ public class ReservationService {
     }
 
     private String generateReservationNumber(Date checkIn) {
-        // prefix based on date: RES-YYYYMMDD-
+        //  based on date: RES-YYYYMMDD-
         String yyyymmdd = new SimpleDateFormat("yyyyMMdd").format(checkIn);
         String prefix = "RES-" + yyyymmdd + "-";
 
@@ -96,7 +96,7 @@ public class ReservationService {
         int next = 1;
 
         if (last != null && last.startsWith(prefix)) {
-            String tail = last.substring(prefix.length()); // e.g. "007"
+            String tail = last.substring(prefix.length()); 
             try {
                 next = Integer.parseInt(tail) + 1;
             } catch (Exception ignored) {

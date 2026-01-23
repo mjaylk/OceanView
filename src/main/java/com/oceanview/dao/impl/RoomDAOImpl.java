@@ -68,7 +68,7 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public int create(Room room) {
-        // ✅ FIX: 5 columns => 5 placeholders
+      
         String sql = "INSERT INTO rooms (room_number, room_type, rate_per_night, max_guests, status) " +
                      "VALUES (?, ?, ?, ?, ?)";
 
@@ -135,7 +135,7 @@ public class RoomDAOImpl implements RoomDAO {
         room.setRoomNumber(rs.getString("room_number"));
         room.setRoomType(rs.getString("room_type"));
         room.setRatePerNight(rs.getDouble("rate_per_night"));
-        room.setMaxGuests(rs.getInt("max_guests")); // ✅ FIX: map it
+        room.setMaxGuests(rs.getInt("max_guests")); 
         room.setStatus(rs.getString("status"));
         return room;
     }

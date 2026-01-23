@@ -212,9 +212,9 @@
   let guestSearchTimer = null;
   let lastGuestResults = [];
 
-  // Room booking state (for selected room)
-  let bookedRanges = []; // [{checkInDate, checkOutDate}]
-  // date overlap: start < existingEnd && end > existingStart [web:205]
+
+  let bookedRanges = []; 
+
 
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("todayLabel").textContent = new Date().toLocaleDateString();
@@ -261,14 +261,14 @@
   }
 
   function lockPastDates() {
-    // Native date input supports min/max bounds [web:242]
+    // Native date input supports min/max bounds 
     const min = todayIso();
     document.getElementById("checkIn").min = min;
     document.getElementById("checkOut").min = min;
   }
 
   function parseIsoDate(s) {
-    // s = "YYYY-MM-DD"
+  
     const [y,m,d] = s.split("-").map(Number);
     return new Date(y, m-1, d);
   }
@@ -279,7 +279,7 @@
     const e1 = parseIsoDate(endIso).getTime();
     const s2 = parseIsoDate(range.checkInDate).getTime();
     const e2 = parseIsoDate(range.checkOutDate).getTime();
-    return s1 < e2 && e1 > s2; // [web:205]
+    return s1 < e2 && e1 > s2; 
   }
 
   function validateAgainstBooked() {
@@ -322,11 +322,11 @@
     meta.textContent = `Max guests: ${room.maxGuests ?? 2} | Status: ${room.status}`;
 
     await loadBookedRangesForRoom(room.roomId);
-    // if user already picked dates, re-validate now
+    // if user already picked dates, re validate now
     validateAgainstBooked();
   });
 
-  // ---------- Guest autocomplete ----------
+  //  Guest autocomplete 
   function initGuestSearch() {
     const input = document.getElementById("guestSearch");
     const dl = document.getElementById("guestSuggestions");
@@ -391,7 +391,7 @@
       .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
   }
 
-  // ---------- Rooms ----------
+  // Rooms 
   async function loadRoomsDropdown() {
     const sel = document.getElementById("roomId");
     const meta = document.getElementById("roomMeta");
@@ -463,7 +463,7 @@
     }
   }
 
-  // ---------- Save reservation ----------
+  // Save reservation 
   async function saveReservation() {
     hideAlert("form");
 
@@ -534,7 +534,7 @@
     }
   }
 
-  // ---------- Table load ----------
+  //  Table load 
   async function loadReservations() {
     hideAlert("page");
     tbody.innerHTML = `<tr><td colspan="7" class="text-muted">Loading...</td></tr>`;

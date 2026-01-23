@@ -18,7 +18,7 @@ public interface ReservationDAO {
     boolean updateStatus(int reservationId, String status);
     boolean delete(int reservationId);
 
-    // NEW for your UI
+
     List<Reservation> findByRoom(int roomId);
     List<Reservation> findBetween(Date start, Date end);
 }

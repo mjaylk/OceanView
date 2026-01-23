@@ -12,7 +12,7 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public List<Reservation> findAll() {
-        // JOIN for display (safe even if you don't use display fields)
+        // JOIN for display 
         String sql =
             "SELECT r.reservation_id, r.reservation_number, r.guest_id, r.room_id, " +
             "       r.check_in_date, r.check_out_date, r.status, r.created_by, " +
@@ -259,7 +259,7 @@ public class ReservationDAOImpl implements ReservationDAO {
     private Reservation map(ResultSet rs) throws SQLException {
         Reservation r = mapBasic(rs);
 
-        // Optional joined columns (may be null if no join)
+       
         try { r.setGuestName(rs.getString("guest_name")); } catch (SQLException ignored) {}
         try { r.setGuestEmail(rs.getString("guest_email")); } catch (SQLException ignored) {}
         try { r.setRoomNumber(rs.getString("room_number")); } catch (SQLException ignored) {}

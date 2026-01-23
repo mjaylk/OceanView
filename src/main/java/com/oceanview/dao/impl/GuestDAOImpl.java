@@ -82,7 +82,6 @@ public class GuestDAOImpl implements GuestDAO {
         }
     }
 
-    // ✅ NEW – phone lookup
     @Override
     public Guest findByContactNumber(String contactNumber) {
         String sql = "SELECT guest_id, user_id, full_name, address, contact_number, email " +
@@ -101,7 +100,7 @@ public class GuestDAOImpl implements GuestDAO {
         }
     }
 
-    // ✅ search by name / email / phone
+
     @Override
     public List<Guest> search(String q, int limit) {
         String sql =

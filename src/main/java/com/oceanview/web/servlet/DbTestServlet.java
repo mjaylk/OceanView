@@ -16,10 +16,10 @@ public class DbTestServlet extends HttpServlet {
         resp.setContentType("text/plain");
 
         try (Connection con = DatabaseConnection.getInstance().getConnection()) {
-            resp.getWriter().println("✅ DB Connected: " + con.getMetaData().getURL());
+            resp.getWriter().println("DB Connected: " + con.getMetaData().getURL());
         } catch (Exception e) {
             resp.setStatus(500);
-            resp.getWriter().println("❌ DB Connection Failed");
+            resp.getWriter().println("DB Connection Failed");
             e.printStackTrace(resp.getWriter());
         }
     }
