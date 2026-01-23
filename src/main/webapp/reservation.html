@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OceanView - Reservations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="assets/css/oceanview-dashboard.css" rel="stylesheet">
+</head>
+<body>
+
+<button class="toggle-sidebar" onclick="toggleSidebar()">
+  <i class="fas fa-bars fs-5"></i>
+</button>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-section">
+      <div class="logo-icon"><i class="fas fa-water-wave"></i></div>
+      <div>
+        <h4 class="sidebar-title mb-0">OceanView</h4>
+        <p class="sidebar-subtitle mb-0">Admin Panel</p>
+      </div>
+    </div>
+  </div>
+  <div class="nav-section">
+    <ul class="nav flex-column list-unstyled px-2">
+      <li class="nav-item">
+        <a class="nav-link" href="admin.html"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="reservation.html"><i class="fas fa-calendar-check"></i><span>Reservations</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="users.html"><i class="fas fa-users-gear"></i><span>Users</span></a>
+      </li>
+    </ul>
+  </div>
+  <a class="nav-link logout-link text-warning" href="/OceanViewResortBooking/api/logout">
+    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+  </a>
+</nav>
+
+<div class="main-content">
+  <header class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+      <i class="fas fa-calendar-check me-2 text-primary"></i>Reservations
+    </h1>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-success">Online</span>
+      <span id="todayLabel" class="text-muted"></span>
+      <button class="btn btn-primary btn-sm"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#reservationModal"
+              onclick="openNewReservationModal()">
+        <i class="fas fa-plus me-1"></i>New Reservation
+      </button>
+    </div>
+  </header>
+
+  <div id="pageAlertWrap" style="display:none;" class="mb-3">
+    <div class="alert alert-dismissible fade show" role="alert" id="pageAlert">
+      <i class="fas fa-triangle-exclamation me-2"></i>
+      <span id="pageAlertMsg"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <div class="card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Recent Reservations</h5>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="loadReservations()">
+        <i class="fas fa-rotate me-1"></i>Refresh
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" id="resTable">
+        <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Guest</th>
+          <th>Email</th>
+          <th>Room</th>
+          <th>Check-in</th>
+          <th>Check-out</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr><td colspan="7" class="text-muted">No data loaded yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="reservationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-calendar-plus me-2 text-primary"></i>New Reservation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="formAlertWrap" style="display:none;">
+          <div class="alert alert-dismissible fade show" role="alert" id="formAlert">
+            <i class="fas fa-circle-info me-2"></i>
+            <span id="formAlertMsg"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <form id="reservationForm" class="row g-3">
+
+          <!-- Guest search -->
+          <div class="col-12">
+            <label class="form-label">Find Guest (email / phone / name)</label>
+            <input type="text" class="form-control" id="guestSearch"
+                   list="guestSuggestions"
+                   placeholder="Start typing..."
+                   autocomplete="off">
+            <datalist id="guestSuggestions"></datalist>
+            <div class="form-text">Select a suggestion to auto-fill guest details.</div>
+            <input type="hidden" id="guestId" value="">
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">Guest Name</label>
+            <input type="text" class="form-control" id="guestName" placeholder="Guest full name" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Guest Email</label>
+            <input type="email" class="form-control" id="guestEmail" placeholder="[email protected]" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Guest Contact Number</label>
+            <input type="text" class="form-control" id="guestContactNumber" placeholder="0771234567" required>
+          </div>
+
+          <div class="col-md-8">
+            <label class="form-label">Room</label>
+            <select class="form-select" id="roomId" required>
+              <option value="">Loading rooms...</option>
+            </select>
+            <div class="form-text" id="roomMeta"></div>
+            <div class="form-text text-muted" id="roomBlockedHint"></div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Guests</label>
+            <input type="number" class="form-control" id="guestCount" min="1" value="1" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Check-in Date</label>
+            <input type="date" class="form-control" id="checkIn" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Check-out Date</label>
+            <input type="date" class="form-control" id="checkOut" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="status" required>
+              <option value="PENDING">Pending</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="CHECKED_IN">Checked-in</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Special Requests</label>
+            <textarea class="form-control" id="notes" rows="3" placeholder="Any special requests..."></textarea>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" onclick="resetReservationForm()">Clear</button>
+        <button type="button" class="btn btn-primary" id="btnSave" onclick="saveReservation()">
+          <span class="me-2" id="btnSaveSpinner" style="display:none;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          </span>
+          Save Reservation
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/oceanview-dashboard.js"></script>
+
+<script>
+  const BASE = "/OceanViewResortBooking";
+  const tbody = document.querySelector("#resTable tbody");
+  const roomsById = new Map();
+
+  // Guest search state
+  let guestSearchTimer = null;
+  let lastGuestResults = [];
+
+  // Room booking state (for selected room)
+  let bookedRanges = []; // [{checkInDate, checkOutDate}]
+  // date overlap: start < existingEnd && end > existingStart [web:205]
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("todayLabel").textContent = new Date().toLocaleDateString();
+    loadReservations();
+  });
+
+  function showAlert(scope, message, level = "danger") {
+    const wrap = document.getElementById(scope + "AlertWrap");
+    const alert = document.getElementById(scope + "Alert");
+    const msg = document.getElementById(scope + "AlertMsg");
+    wrap.style.display = "block";
+    alert.className = `alert alert-${level} alert-dismissible fade show`;
+    msg.textContent = message;
+  }
+
+  function hideAlert(scope) {
+    document.getElementById(scope + "AlertWrap").style.display = "none";
+  }
+
+  function setSaving(isSaving) {
+    document.getElementById("btnSave").disabled = isSaving;
+    document.getElementById("btnSaveSpinner").style.display = isSaving ? "inline-block" : "none";
+  }
+
+  function todayIso() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function openNewReservationModal() {
+    resetReservationForm();
+    loadRoomsDropdown();
+    initGuestSearch();
+    lockPastDates();
+  }
+
+  function resetReservationForm() {
+    document.getElementById("reservationForm").reset();
+    document.getElementById("guestId").value = "";
+    document.getElementById("roomMeta").textContent = "";
+    document.getElementById("roomBlockedHint").textContent = "";
+    document.getElementById("guestSuggestions").innerHTML = "";
+    bookedRanges = [];
+    hideAlert("form");
+  }
+
+  function lockPastDates() {
+    // Native date input supports min/max bounds [web:242]
+    const min = todayIso();
+    document.getElementById("checkIn").min = min;
+    document.getElementById("checkOut").min = min;
+  }
+
+  function parseIsoDate(s) {
+    // s = "YYYY-MM-DD"
+    const [y,m,d] = s.split("-").map(Number);
+    return new Date(y, m-1, d);
+  }
+
+  function overlaps(startIso, endIso, range) {
+    // Treat checkOut as exclusive for overlap check
+    const s1 = parseIsoDate(startIso).getTime();
+    const e1 = parseIsoDate(endIso).getTime();
+    const s2 = parseIsoDate(range.checkInDate).getTime();
+    const e2 = parseIsoDate(range.checkOutDate).getTime();
+    return s1 < e2 && e1 > s2; // [web:205]
+  }
+
+  function validateAgainstBooked() {
+    const roomId = Number(document.getElementById("roomId").value || 0);
+    const inD = document.getElementById("checkIn").value;
+    const outD = document.getElementById("checkOut").value;
+
+    if (!roomId || !inD || !outD) return true;
+
+    if (outD <= inD) {
+      showAlert("form", "Check-out date must be after check-in date.", "warning");
+      return false;
+    }
+
+    const conflict = bookedRanges.some(r => overlaps(inD, outD, r));
+    if (conflict) {
+      showAlert("form", "Selected dates overlap with an existing reservation for this room.", "danger");
+      return false;
+    }
+    return true;
+  }
+
+  document.getElementById("checkIn").addEventListener("change", () => {
+    hideAlert("form");
+    validateAgainstBooked();
+    // Set checkout min = checkin + 1 day
+    const inD = document.getElementById("checkIn").value;
+    if (inD) document.getElementById("checkOut").min = inD;
+  });
+
+  document.getElementById("checkOut").addEventListener("change", () => {
+    hideAlert("form");
+    validateAgainstBooked();
+  });
+
+  document.getElementById("roomId").addEventListener("change", async () => {
+    const room = roomsById.get(String(document.getElementById("roomId").value));
+    const meta = document.getElementById("roomMeta");
+    if (!room) { meta.textContent = ""; return; }
+    meta.textContent = `Max guests: ${room.maxGuests ?? 2} | Status: ${room.status}`;
+
+    await loadBookedRangesForRoom(room.roomId);
+    // if user already picked dates, re-validate now
+    validateAgainstBooked();
+  });
+
+  // ---------- Guest autocomplete ----------
+  function initGuestSearch() {
+    const input = document.getElementById("guestSearch");
+    const dl = document.getElementById("guestSuggestions");
+
+    // prevent double binding if modal opened multiple times
+    if (input.dataset.bound === "1") return;
+    input.dataset.bound = "1";
+
+    input.addEventListener("input", () => {
+      clearTimeout(guestSearchTimer);
+      guestSearchTimer = setTimeout(async () => {
+        const q = input.value.trim();
+        document.getElementById("guestId").value = "";
+
+        if (q.length < 3) {
+          dl.innerHTML = "";
+          lastGuestResults = [];
+          return;
+        }
+
+        try {
+          const res = await fetch(`${BASE}/api/guests/search?q=${encodeURIComponent(q)}`, { credentials: "same-origin" });
+          const txt = await res.text();
+          let data = {};
+          try { data = JSON.parse(txt); } catch(e) {}
+
+          if (!res.ok) {
+            dl.innerHTML = "";
+            lastGuestResults = [];
+            return;
+          }
+
+          const guests = data.guests || [];
+          lastGuestResults = guests;
+
+          dl.innerHTML = guests.map(g => {
+            const label = `${g.fullName} | ${g.email || "-"} | ${g.contactNumber || "-"}`;
+            return `<option value="${escapeHtml(label)}"></option>`;
+          }).join("");
+
+        } catch (e) {
+          dl.innerHTML = "";
+          lastGuestResults = [];
+        }
+      }, 350); 
+    });
+
+    input.addEventListener("change", () => {
+      const val = input.value.trim();
+      const g = lastGuestResults.find(x => (`${x.fullName} | ${x.email || "-"} | ${x.contactNumber || "-"}`) === val);
+      if (!g) return;
+      document.getElementById("guestId").value = g.guestId;
+      document.getElementById("guestName").value = g.fullName || "";
+      document.getElementById("guestEmail").value = g.email || "";
+      document.getElementById("guestContactNumber").value = g.contactNumber || "";
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  }
+
+  // ---------- Rooms ----------
+  async function loadRoomsDropdown() {
+    const sel = document.getElementById("roomId");
+    const meta = document.getElementById("roomMeta");
+
+    sel.innerHTML = `<option value="">Loading rooms...</option>`;
+    roomsById.clear();
+    meta.textContent = "";
+    bookedRanges = [];
+    document.getElementById("roomBlockedHint").textContent = "";
+
+    try {
+      const res = await fetch(`${BASE}/api/rooms`, { credentials: "same-origin" });
+      const txt = await res.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch(e) {}
+
+      if (!res.ok) {
+        showAlert("form", data.message || "Failed to load rooms.", "danger");
+        sel.innerHTML = `<option value="">-- No rooms --</option>`;
+        return;
+      }
+
+      const rooms = data.rooms || [];
+      if (!rooms.length) {
+        sel.innerHTML = `<option value="">-- No rooms available --</option>`;
+        return;
+      }
+
+      const available = rooms.filter(r => r.status === "AVAILABLE");
+      const list = available.length ? available : rooms;
+
+      sel.innerHTML = `<option value="">Select a room</option>`;
+      list.forEach(r => {
+        roomsById.set(String(r.roomId), r);
+        const label = `${r.roomNumber} - ${r.roomType} - $${Number(r.price).toFixed(2)}`;
+        sel.add(new Option(label, r.roomId));
+      });
+
+    } catch (err) {
+      showAlert("form", "Network error loading rooms: " + err.message, "danger");
+      sel.innerHTML = `<option value="">-- Failed to load --</option>`;
+    }
+  }
+
+  async function loadBookedRangesForRoom(roomId) {
+    bookedRanges = [];
+    document.getElementById("roomBlockedHint").textContent = "";
+
+    if (!roomId) return;
+
+    try {
+      const res = await fetch(`${BASE}/api/reservations/by-room?roomId=${encodeURIComponent(roomId)}`, {
+        credentials: "same-origin"
+      });
+      const txt = await res.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch(e) {}
+
+      if (!res.ok) return;
+
+      bookedRanges = data.bookings || [];
+      if (bookedRanges.length) {
+        document.getElementById("roomBlockedHint").textContent =
+          `Blocked ranges: ` + bookedRanges.slice(0, 3).map(b => `${b.checkInDate} → ${b.checkOutDate}`).join(" , ")
+          + (bookedRanges.length > 3 ? " ..." : "");
+      }
+    } catch (e) {
+      bookedRanges = [];
+    }
+  }
+
+  // ---------- Save reservation ----------
+  async function saveReservation() {
+    hideAlert("form");
+
+    const payload = {
+      guestId: Number(document.getElementById("guestId").value || 0),
+      guestName: document.getElementById("guestName").value.trim(),
+      guestEmail: document.getElementById("guestEmail").value.trim(),
+      guestContactNumber: document.getElementById("guestContactNumber").value.trim(),
+
+      roomId: Number(document.getElementById("roomId").value || 0),
+      checkInDate: document.getElementById("checkIn").value,
+      checkOutDate: document.getElementById("checkOut").value,
+      guestCount: Number(document.getElementById("guestCount").value || 1),
+      status: document.getElementById("status").value,
+      notes: document.getElementById("notes").value.trim()
+    };
+
+    if (!payload.guestName || !payload.guestEmail || !payload.guestContactNumber ||
+        !payload.roomId || !payload.checkInDate || !payload.checkOutDate) {
+      showAlert("form", "Please fill all required fields.", "warning");
+      return;
+    }
+
+    // validate room capacity
+    const room = roomsById.get(String(payload.roomId));
+    const max = room?.maxGuests ?? 2;
+    if (payload.guestCount > max) {
+      showAlert("form", `Guest count cannot exceed room capacity (${max}).`, "warning");
+      return;
+    }
+
+    // validate date overlap with booked ranges
+    if (!validateAgainstBooked()) return;
+
+    try {
+      setSaving(true);
+      showAlert("form", "Saving reservation...", "info");
+
+      const res = await fetch(`${BASE}/api/reservations`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const txt = await res.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch(e) {}
+
+      if (!res.ok) {
+        showAlert("form", data.message || "Failed to save reservation.", "danger");
+        return;
+      }
+
+      showAlert("form", "Reservation saved successfully.", "success");
+
+      setTimeout(() => {
+        const modalEl = document.getElementById("reservationModal");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        loadReservations();
+      }, 600);
+
+    } catch (err) {
+      showAlert("form", "Network error: " + err.message, "danger");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // ---------- Table load ----------
+  async function loadReservations() {
+    hideAlert("page");
+    tbody.innerHTML = `<tr><td colspan="7" class="text-muted">Loading...</td></tr>`;
+
+    try {
+      const res = await fetch(`${BASE}/api/reservations`, { credentials: "same-origin" });
+      const txt = await res.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch(e) {}
+
+      if (!res.ok) {
+        showAlert("page", data.message || "Failed to load reservations.", "danger");
+        tbody.innerHTML = `<tr><td colspan="7" class="text-danger">Failed to load.</td></tr>`;
+        return;
+      }
+
+      const list = data.reservations || [];
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-muted">No reservations found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(r => `
+        <tr>
+          <td class="fw-semibold">${r.reservationId}</td>
+          <td>${r.guestName || r.guestId}</td>
+          <td>${r.guestEmail || "-"}</td>
+          <td>${r.roomNumber || r.roomId}</td>
+          <td>${r.checkInDate}</td>
+          <td>${r.checkOutDate}</td>
+          <td><span class="badge bg-${r.status === 'CONFIRMED' ? 'success' : r.status === 'PENDING' ? 'warning' : 'info'}">${r.status}</span></td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      showAlert("page", "Network error: " + err.message, "danger");
+      tbody.innerHTML = `<tr><td colspan="7" class="text-danger">Failed to load.</td></tr>`;
+    }
+  }
+</script>
+</body>
+</html>
