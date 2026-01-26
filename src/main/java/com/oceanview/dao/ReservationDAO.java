@@ -17,6 +17,8 @@ public interface ReservationDAO {
     int create(Reservation reservation);
     boolean updateStatus(int reservationId, String status);
     boolean delete(int reservationId);
+    
+    boolean update(Reservation r);
 
 
     List<Reservation> findByRoom(int roomId);

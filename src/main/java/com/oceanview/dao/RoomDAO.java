@@ -10,4 +10,5 @@ public interface RoomDAO {
     int create(Room room);
     boolean update(Room room);
     boolean delete(int id);
+    double findPriceById(int roomId);
 }

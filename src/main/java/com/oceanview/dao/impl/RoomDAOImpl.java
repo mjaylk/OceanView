@@ -13,8 +13,7 @@ public class RoomDAOImpl implements RoomDAO {
     @Override
     public List<Room> findAll() {
         List<Room> rooms = new ArrayList<>();
-        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status " +
-                     "FROM rooms ORDER BY room_number";
+        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status FROM rooms ORDER BY room_number";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -30,8 +29,7 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public Room findById(int id) {
-        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status " +
-                     "FROM rooms WHERE room_id = ?";
+        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status FROM rooms WHERE room_id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -49,8 +47,7 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public Room findByNumber(String roomNumber) {
-        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status " +
-                     "FROM rooms WHERE room_number = ?";
+        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status FROM rooms WHERE room_number = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -68,9 +65,7 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public int create(Room room) {
-      
-        String sql = "INSERT INTO rooms (room_number, room_type, rate_per_night, max_guests, status) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO rooms (room_number, room_type, rate_per_night, max_guests, status) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -94,8 +89,7 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public boolean update(Room room) {
-        String sql = "UPDATE rooms SET room_number=?, room_type=?, rate_per_night=?, max_guests=?, status=? " +
-                     "WHERE room_id=?";
+        String sql = "UPDATE rooms SET room_number=?, room_type=?, rate_per_night=?, max_guests=?, status=? WHERE room_id=?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -129,13 +123,31 @@ public class RoomDAOImpl implements RoomDAO {
         }
     }
 
+    @Override
+    public double findPriceById(int roomId) {
+        String sql = "SELECT rate_per_night FROM rooms WHERE room_id=?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, roomId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getDouble(1) : 0.0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load room price", e);
+        }
+    }
+
     private Room map(ResultSet rs) throws SQLException {
         Room room = new Room();
         room.setRoomId(rs.getInt("room_id"));
         room.setRoomNumber(rs.getString("room_number"));
         room.setRoomType(rs.getString("room_type"));
         room.setRatePerNight(rs.getDouble("rate_per_night"));
-        room.setMaxGuests(rs.getInt("max_guests")); 
+        room.setMaxGuests(rs.getInt("max_guests"));
         room.setStatus(rs.getString("status"));
         return room;
     }

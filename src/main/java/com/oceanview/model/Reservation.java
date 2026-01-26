@@ -5,20 +5,27 @@ import java.sql.Date;
 public class Reservation {
     private int reservationId;
     private String reservationNumber;
-
     private int guestId;
     private int roomId;
-
     private Date checkInDate;
     private Date checkOutDate;
-
     private String status;
     private int createdBy;
 
-  
+    private int nights;
+    private double ratePerNight;
+    private double subtotal;
+    private double tax;
+    private double discount;
+    private double totalAmount;
+
     private String guestName;
     private String guestEmail;
     private String roomNumber;
+    
+    private String guestContactNumber;
+    private String roomType;
+
 
     public Reservation() {}
 
@@ -46,6 +53,24 @@ public class Reservation {
     public int getCreatedBy() { return createdBy; }
     public void setCreatedBy(int createdBy) { this.createdBy = createdBy; }
 
+    public int getNights() { return nights; }
+    public void setNights(int nights) { this.nights = nights; }
+
+    public double getRatePerNight() { return ratePerNight; }
+    public void setRatePerNight(double ratePerNight) { this.ratePerNight = ratePerNight; }
+
+    public double getSubtotal() { return subtotal; }
+    public void setSubtotal(double subtotal) { this.subtotal = subtotal; }
+
+    public double getTax() { return tax; }
+    public void setTax(double tax) { this.tax = tax; }
+
+    public double getDiscount() { return discount; }
+    public void setDiscount(double discount) { this.discount = discount; }
+
+    public double getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
+
     public String getGuestName() { return guestName; }
     public void setGuestName(String guestName) { this.guestName = guestName; }
 
@@ -54,4 +79,21 @@ public class Reservation {
 
     public String getRoomNumber() { return roomNumber; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
+    
+    public String getGuestContactNumber() {
+        return guestContactNumber;
+    }
+
+    public void setGuestContactNumber(String guestContactNumber) {
+        this.guestContactNumber = guestContactNumber;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(String roomType) {
+        this.roomType = roomType;
+    }
+
 }

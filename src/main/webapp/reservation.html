@@ -8,6 +8,13 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="assets/css/oceanview-dashboard.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.css">
+  <style>
+    /* Optional: slightly nicer calendar spacing */
+    #bookingsCalendar .fc .fc-toolbar-title { font-size: 1.1rem; }
+    #bookingsCalendar .fc-daygrid-event { cursor: pointer; }
+  </style>
 </head>
 <body>
 
@@ -69,9 +76,10 @@
     </div>
   </div>
 
-  <div class="card p-3">
+  <!-- TABLE -->
+  <div class="card p-3 border-0 shadow-sm">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="mb-0">Recent Reservations</h5>
+      <h5 class="mb-0">Reservations</h5>
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="loadReservations()">
         <i class="fas fa-rotate me-1"></i>Refresh
       </button>
@@ -79,7 +87,7 @@
 
     <div class="table-responsive">
       <table class="table table-hover align-middle" id="resTable">
-        <thead class="table-dark">
+        <thead class="table-light">
         <tr>
           <th>ID</th>
           <th>Guest</th>
@@ -88,23 +96,49 @@
           <th>Check-in</th>
           <th>Check-out</th>
           <th>Status</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr><td colspan="7" class="text-muted">No data loaded yet.</td></tr>
+        <tr><td colspan="9" class="text-muted">No data loaded yet.</td></tr>
         </tbody>
       </table>
     </div>
   </div>
+
+  <!-- CALENDAR + CARDS -->
+  <div class="row g-3 mt-3">
+    <div class="col-lg-8">
+      <div class="card p-3 border-0 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Bookings Calendar</h5>
+          <small class="text-muted">Hover a booking to see details</small>
+        </div>
+        <div id="bookingsCalendar"></div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card p-3 border-0 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Recent Check-ins</h5>
+          <small class="text-muted" id="checkInCount">0</small>
+        </div>
+        <div id="recentCheckins" class="d-grid gap-2"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- MODAL -->
+<!-- CREATE/EDIT MODAL -->
 <div class="modal fade" id="reservationModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
+    <div class="modal-content border-0 shadow-sm">
 
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-calendar-plus me-2 text-primary"></i>New Reservation</h5>
+        <h5 class="modal-title" id="reservationModalTitle"><i class="fas fa-calendar-plus me-2 text-primary"></i>New Reservation</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
@@ -118,8 +152,8 @@
         </div>
 
         <form id="reservationForm" class="row g-3">
+          <input type="hidden" id="reservationId" value="">
 
-          <!-- Guest search -->
           <div class="col-12">
             <label class="form-label">Find Guest (email / phone / name)</label>
             <input type="text" class="form-control" id="guestSearch"
@@ -133,17 +167,17 @@
 
           <div class="col-md-12">
             <label class="form-label">Guest Name</label>
-            <input type="text" class="form-control" id="guestName" placeholder="Guest full name" required>
+            <input type="text" class="form-control" id="guestName" required>
           </div>
 
           <div class="col-md-6">
             <label class="form-label">Guest Email</label>
-            <input type="email" class="form-control" id="guestEmail" placeholder="[email protected]" required>
+            <input type="email" class="form-control" id="guestEmail" required>
           </div>
 
           <div class="col-md-6">
             <label class="form-label">Guest Contact Number</label>
-            <input type="text" class="form-control" id="guestContactNumber" placeholder="0771234567" required>
+            <input type="text" class="form-control" id="guestContactNumber" required>
           </div>
 
           <div class="col-md-8">
@@ -179,9 +213,31 @@
             </select>
           </div>
 
+          <div class="col-12"><hr class="my-2"></div>
+
+          <div class="col-md-3">
+            <label class="form-label">Nights</label>
+            <input type="text" class="form-control" id="calcNights" readonly>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Rate / Night</label>
+            <input type="text" class="form-control" id="calcRate" readonly>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Subtotal</label>
+            <input type="text" class="form-control" id="calcSubtotal" readonly>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Total</label>
+            <input type="text" class="form-control fw-semibold" id="calcTotal" readonly>
+          </div>
+
           <div class="col-12">
             <label class="form-label">Special Requests</label>
-            <textarea class="form-control" id="notes" rows="3" placeholder="Any special requests..."></textarea>
+            <textarea class="form-control" id="notes" rows="3"></textarea>
           </div>
         </form>
       </div>
@@ -200,7 +256,91 @@
   </div>
 </div>
 
+<!-- VIEW MODAL -->
+<div class="modal fade" id="viewReservationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-sm">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-receipt me-2 text-muted"></i>Reservation Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <div class="text-muted small">Reservation Number</div>
+            <div class="fs-5 fw-semibold" id="vReservationNumber">-</div>
+          </div>
+          <div class="text-end">
+            <div class="text-muted small">Status</div>
+            <span class="badge text-bg-secondary" id="vStatus">-</span>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="border rounded-3 p-3 h-100">
+              <div class="text-muted small mb-2">Guest</div>
+              <div class="fw-semibold" id="vGuestName">-</div>
+              <div class="text-muted small" id="vGuestEmail">-</div>
+              <div class="text-muted small" id="vGuestPhone">-</div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="border rounded-3 p-3 h-100">
+              <div class="text-muted small mb-2">Room</div>
+              <div class="fw-semibold" id="vRoomNumber">-</div>
+              <div class="text-muted small" id="vDates">-</div>
+              <div class="text-muted small" id="vNights">-</div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="border rounded-3 p-3">
+              <div class="text-muted small mb-2">Pricing</div>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <div class="text-muted small">Rate / Night</div>
+                  <div class="fw-semibold" id="vRate">-</div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-muted small">Subtotal</div>
+                  <div class="fw-semibold" id="vSubtotal">-</div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-muted small">Tax</div>
+                  <div class="fw-semibold" id="vTax">-</div>
+                </div>
+                <div class="col-md-3">
+                  <div class="text-muted small">Total</div>
+                  <div class="fw-semibold" id="vTotal">-</div>
+                </div>
+              </div>
+              <div class="text-muted small mt-2" id="vDiscount">-</div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="text-muted small mb-1">Notes</div>
+            <div class="border rounded-3 p-3" id="vNotes">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-outline-secondary" id="vEditBtn" type="button">Edit</button>
+        <button class="btn btn-outline-danger" id="vDeleteBtn" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js"></script>
 <script src="assets/js/oceanview-dashboard.js"></script>
 
 <script>
@@ -208,17 +348,16 @@
   const tbody = document.querySelector("#resTable tbody");
   const roomsById = new Map();
 
-  // Guest search state
   let guestSearchTimer = null;
   let lastGuestResults = [];
-
-
-  let bookedRanges = []; 
-
+  let bookedRanges = [];
+  let reservationsCache = [];
+  let calendar = null;
 
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("todayLabel").textContent = new Date().toLocaleDateString();
     loadReservations();
+    initCalendarIfNeeded();
   });
 
   function showAlert(scope, message, level = "danger") {
@@ -229,22 +368,31 @@
     alert.className = `alert alert-${level} alert-dismissible fade show`;
     msg.textContent = message;
   }
-
-  function hideAlert(scope) {
-    document.getElementById(scope + "AlertWrap").style.display = "none";
-  }
+  function hideAlert(scope) { document.getElementById(scope + "AlertWrap").style.display = "none"; }
 
   function setSaving(isSaving) {
     document.getElementById("btnSave").disabled = isSaving;
     document.getElementById("btnSaveSpinner").style.display = isSaving ? "inline-block" : "none";
   }
 
-  function todayIso() {
-    return new Date().toISOString().slice(0, 10);
+  function todayIso() { return new Date().toISOString().slice(0, 10); }
+  function money(v) { const n = Number(v || 0); return "$" + n.toFixed(2); }
+
+  function setStatusBadge(el, status) {
+    const s = String(status || "").toUpperCase();
+    el.textContent = s || "-";
+    el.className = "badge " + (
+      s === "CONFIRMED" ? "text-bg-success" :
+      s === "PENDING" ? "text-bg-warning" :
+      s === "CHECKED_IN" ? "text-bg-info" :
+      "text-bg-secondary"
+    );
   }
 
   function openNewReservationModal() {
     resetReservationForm();
+    document.getElementById("reservationModalTitle").innerHTML =
+      `<i class="fas fa-calendar-plus me-2 text-primary"></i>New Reservation`;
     loadRoomsDropdown();
     initGuestSearch();
     lockPastDates();
@@ -252,34 +400,33 @@
 
   function resetReservationForm() {
     document.getElementById("reservationForm").reset();
+    document.getElementById("reservationId").value = "";
     document.getElementById("guestId").value = "";
     document.getElementById("roomMeta").textContent = "";
     document.getElementById("roomBlockedHint").textContent = "";
     document.getElementById("guestSuggestions").innerHTML = "";
     bookedRanges = [];
     hideAlert("form");
+    renderCalc({ nights: "", rate: "", subtotal: "", total: "" });
   }
 
   function lockPastDates() {
-    // Native date input supports min/max bounds 
     const min = todayIso();
     document.getElementById("checkIn").min = min;
     document.getElementById("checkOut").min = min;
   }
 
   function parseIsoDate(s) {
-  
     const [y,m,d] = s.split("-").map(Number);
     return new Date(y, m-1, d);
   }
 
   function overlaps(startIso, endIso, range) {
-    // Treat checkOut as exclusive for overlap check
     const s1 = parseIsoDate(startIso).getTime();
     const e1 = parseIsoDate(endIso).getTime();
     const s2 = parseIsoDate(range.checkInDate).getTime();
     const e2 = parseIsoDate(range.checkOutDate).getTime();
-    return s1 < e2 && e1 > s2; 
+    return s1 < e2 && e1 > s2;
   }
 
   function validateAgainstBooked() {
@@ -302,36 +449,81 @@
     return true;
   }
 
+  function getRoomRate(room) {
+    const v = room?.ratePerNight ?? room?.rate_per_night ?? room?.price ?? room?.rate ?? 0;
+    return Number(v || 0);
+  }
+
+  function calcNights(checkInIso, checkOutIso) {
+    if (!checkInIso || !checkOutIso) return 0;
+    const ms = parseIsoDate(checkOutIso).getTime() - parseIsoDate(checkInIso).getTime();
+    const n = Math.floor(ms / (1000 * 60 * 60 * 24));
+    return n > 0 ? n : 0;
+  }
+
+  function round2(n) { return Math.round((Number(n) + Number.EPSILON) * 100) / 100; }
+
+  function renderCalc({ nights, rate, subtotal, total }) {
+    document.getElementById("calcNights").value = nights;
+    document.getElementById("calcRate").value = rate === "" ? "" : money(rate);
+    document.getElementById("calcSubtotal").value = subtotal === "" ? "" : money(subtotal);
+    document.getElementById("calcTotal").value = total === "" ? "" : money(total);
+  }
+
+  function recalcPricing() {
+    const roomId = Number(document.getElementById("roomId").value || 0);
+    const room = roomsById.get(String(roomId));
+    const inD = document.getElementById("checkIn").value;
+    const outD = document.getElementById("checkOut").value;
+
+    if (!roomId || !room) { renderCalc({ nights:"", rate:"", subtotal:"", total:"" }); return; }
+
+    const rate = getRoomRate(room);
+    const nights = calcNights(inD, outD);
+
+    if (!inD || !outD || !nights || rate <= 0) {
+      renderCalc({ nights: nights ? nights : "", rate: rate > 0 ? rate : "", subtotal:"", total:"" });
+      return;
+    }
+
+    const subtotal = round2(nights * rate);
+    const tax = 0.00;
+    const discount = 0.00;
+    const total = round2(subtotal + tax - discount);
+    renderCalc({ nights, rate, subtotal, total });
+  }
+
   document.getElementById("checkIn").addEventListener("change", () => {
     hideAlert("form");
-    validateAgainstBooked();
-    // Set checkout min = checkin + 1 day
     const inD = document.getElementById("checkIn").value;
     if (inD) document.getElementById("checkOut").min = inD;
+    validateAgainstBooked();
+    recalcPricing();
   });
 
   document.getElementById("checkOut").addEventListener("change", () => {
     hideAlert("form");
     validateAgainstBooked();
+    recalcPricing();
   });
 
   document.getElementById("roomId").addEventListener("change", async () => {
     const room = roomsById.get(String(document.getElementById("roomId").value));
     const meta = document.getElementById("roomMeta");
-    if (!room) { meta.textContent = ""; return; }
-    meta.textContent = `Max guests: ${room.maxGuests ?? 2} | Status: ${room.status}`;
+    if (!room) { meta.textContent = ""; recalcPricing(); return; }
+
+    const rate = getRoomRate(room);
+    meta.textContent = `Max guests: ${room.maxGuests ?? 2} | Status: ${room.status} | Rate: ${money(rate)}`;
 
     await loadBookedRangesForRoom(room.roomId);
-    // if user already picked dates, re validate now
     validateAgainstBooked();
+    recalcPricing();
   });
 
-  //  Guest autocomplete 
   function initGuestSearch() {
     const input = document.getElementById("guestSearch");
     const dl = document.getElementById("guestSuggestions");
 
-    // prevent double binding if modal opened multiple times
     if (input.dataset.bound === "1") return;
     input.dataset.bound = "1";
 
@@ -353,11 +545,7 @@
           let data = {};
           try { data = JSON.parse(txt); } catch(e) {}
 
-          if (!res.ok) {
-            dl.innerHTML = "";
-            lastGuestResults = [];
-            return;
-          }
+          if (!res.ok) { dl.innerHTML = ""; lastGuestResults = []; return; }
 
           const guests = data.guests || [];
           lastGuestResults = guests;
@@ -371,7 +559,7 @@
           dl.innerHTML = "";
           lastGuestResults = [];
         }
-      }, 350); 
+      }, 350);
     });
 
     input.addEventListener("change", () => {
@@ -391,7 +579,6 @@
       .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
   }
 
-  // Rooms 
   async function loadRoomsDropdown() {
     const sel = document.getElementById("roomId");
     const meta = document.getElementById("roomMeta");
@@ -426,9 +613,11 @@
       sel.innerHTML = `<option value="">Select a room</option>`;
       list.forEach(r => {
         roomsById.set(String(r.roomId), r);
-        const label = `${r.roomNumber} - ${r.roomType} - $${Number(r.price).toFixed(2)}`;
-        sel.add(new Option(label, r.roomId));
+        const rate = getRoomRate(r);
+        sel.add(new Option(`${r.roomNumber} - ${r.roomType} - ${money(rate)}`, r.roomId));
       });
+
+      recalcPricing();
 
     } catch (err) {
       showAlert("form", "Network error loading rooms: " + err.message, "danger");
@@ -439,17 +628,13 @@
   async function loadBookedRangesForRoom(roomId) {
     bookedRanges = [];
     document.getElementById("roomBlockedHint").textContent = "";
-
     if (!roomId) return;
 
     try {
-      const res = await fetch(`${BASE}/api/reservations/by-room?roomId=${encodeURIComponent(roomId)}`, {
-        credentials: "same-origin"
-      });
+      const res = await fetch(`${BASE}/api/reservations/by-room?roomId=${encodeURIComponent(roomId)}`, { credentials: "same-origin" });
       const txt = await res.text();
       let data = {};
       try { data = JSON.parse(txt); } catch(e) {}
-
       if (!res.ok) return;
 
       bookedRanges = data.bookings || [];
@@ -463,22 +648,150 @@
     }
   }
 
-  // Save reservation 
+  async function viewReservation(id) {
+    try {
+      const res = await fetch(`${BASE}/api/reservations/detail?id=${encodeURIComponent(id)}`, { credentials: "same-origin" });
+      const txt = await res.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch (e) {}
+
+      if (!res.ok) {
+        showAlert("page", data.message || "Failed to load reservation detail.", "danger");
+        return;
+      }
+
+      const r = data.reservation || data.data || data;
+      if (!r || typeof r !== "object") {
+        showAlert("page", "Invalid detail response from server.", "danger");
+        return;
+      }
+
+      document.getElementById("vReservationNumber").textContent = r.reservationNumber || "-";
+      setStatusBadge(document.getElementById("vStatus"), r.status);
+
+      document.getElementById("vGuestName").textContent = r.guestName || ("Guest #" + (r.guestId ?? "-"));
+      document.getElementById("vGuestEmail").textContent = r.guestEmail || "-";
+      document.getElementById("vGuestPhone").textContent = r.guestContactNumber || "-";
+
+      document.getElementById("vRoomNumber").textContent = r.roomNumber || ("Room #" + (r.roomId ?? "-"));
+      document.getElementById("vDates").textContent = `${r.checkInDate || "-"} → ${r.checkOutDate || "-"}`;
+      document.getElementById("vNights").textContent = `Nights: ${r.nights ?? "-"}`;
+
+      document.getElementById("vRate").textContent = money(r.ratePerNight ?? 0);
+      document.getElementById("vSubtotal").textContent = money(r.subtotal ?? 0);
+      document.getElementById("vTax").textContent = money(r.tax ?? 0);
+      document.getElementById("vTotal").textContent = money(r.totalAmount ?? 0);
+      document.getElementById("vDiscount").textContent = `Discount: ${money(r.discount ?? 0)}`;
+
+      document.getElementById("vNotes").textContent = r.notes || "-";
+
+      document.getElementById("vEditBtn").onclick = () => {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("viewReservationModal")).hide();
+        openEditReservationModal(id);
+      };
+
+      document.getElementById("vDeleteBtn").onclick = async () => {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("viewReservationModal")).hide();
+        await deleteReservation(id);
+      };
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("viewReservationModal")).show();
+
+    } catch (e) {
+      showAlert("page", "Network error: " + e.message, "danger");
+    }
+  }
+
+  async function openEditReservationModal(id) {
+    const r = reservationsCache.find(x => Number(x.reservationId) === Number(id));
+    if (!r) { showAlert("page", "Reservation not found in table.", "warning"); return; }
+
+    resetReservationForm();
+    document.getElementById("reservationModalTitle").innerHTML =
+      `<i class="fas fa-pen-to-square me-2 text-primary"></i>Edit Reservation`;
+    document.getElementById("reservationId").value = r.reservationId;
+
+    await loadRoomsDropdown();
+    initGuestSearch();
+    lockPastDates();
+
+    document.getElementById("guestId").value = r.guestId || "";
+    document.getElementById("guestName").value = r.guestName || "";
+    document.getElementById("guestEmail").value = r.guestEmail || "";
+    document.getElementById("guestContactNumber").value = r.guestContactNumber || "";
+
+    document.getElementById("roomId").value = r.roomId || "";
+    await loadBookedRangesForRoom(r.roomId);
+
+    document.getElementById("checkIn").value = r.checkInDate || "";
+    document.getElementById("checkOut").value = r.checkOutDate || "";
+    document.getElementById("status").value = r.status || "PENDING";
+
+    recalcPricing();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("reservationModal")).show();
+  }
+
+  async function deleteReservation(id) {
+    if (!confirm("Delete this reservation?")) return;
+
+    try {
+      const res = await fetch(`${BASE}/api/reservations?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+
+      const txt = await res.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch(e) {}
+
+      if (!res.ok) {
+        showAlert("page", data.message || "Delete failed.", "danger");
+        return;
+      }
+
+      showAlert("page", "Reservation deleted.", "success");
+      loadReservations();
+      if (calendar) calendar.refetchEvents();
+
+    } catch (e) {
+      showAlert("page", "Network error: " + e.message, "danger");
+    }
+  }
+
   async function saveReservation() {
     hideAlert("form");
 
+    const reservationId = Number(document.getElementById("reservationId").value || 0);
+    const roomId = Number(document.getElementById("roomId").value || 0);
+    const room = roomsById.get(String(roomId));
+    const rate = getRoomRate(room);
+
+    const inD = document.getElementById("checkIn").value;
+    const outD = document.getElementById("checkOut").value;
+    const nights = calcNights(inD, outD);
+    const subtotal = round2(nights * rate);
+    const tax = 0.00;
+    const discount = 0.00;
+    const totalAmount = round2(subtotal + tax - discount);
+
     const payload = {
+      reservationId,
       guestId: Number(document.getElementById("guestId").value || 0),
       guestName: document.getElementById("guestName").value.trim(),
       guestEmail: document.getElementById("guestEmail").value.trim(),
       guestContactNumber: document.getElementById("guestContactNumber").value.trim(),
-
-      roomId: Number(document.getElementById("roomId").value || 0),
-      checkInDate: document.getElementById("checkIn").value,
-      checkOutDate: document.getElementById("checkOut").value,
+      roomId,
+      checkInDate: inD,
+      checkOutDate: outD,
       guestCount: Number(document.getElementById("guestCount").value || 1),
       status: document.getElementById("status").value,
-      notes: document.getElementById("notes").value.trim()
+      notes: document.getElementById("notes").value.trim(),
+      nights,
+      ratePerNight: rate,
+      subtotal,
+      tax,
+      discount,
+      totalAmount
     };
 
     if (!payload.guestName || !payload.guestEmail || !payload.guestContactNumber ||
@@ -487,23 +800,20 @@
       return;
     }
 
-    // validate room capacity
-    const room = roomsById.get(String(payload.roomId));
     const max = room?.maxGuests ?? 2;
     if (payload.guestCount > max) {
       showAlert("form", `Guest count cannot exceed room capacity (${max}).`, "warning");
       return;
     }
 
-    // validate date overlap with booked ranges
     if (!validateAgainstBooked()) return;
 
     try {
       setSaving(true);
-      showAlert("form", "Saving reservation...", "info");
+      showAlert("form", reservationId ? "Updating reservation..." : "Saving reservation...", "info");
 
       const res = await fetch(`${BASE}/api/reservations`, {
-        method: "POST",
+        method: reservationId ? "PUT" : "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -518,14 +828,13 @@
         return;
       }
 
-      showAlert("form", "Reservation saved successfully.", "success");
+      showAlert("form", reservationId ? "Reservation updated successfully." : "Reservation saved successfully.", "success");
 
       setTimeout(() => {
-        const modalEl = document.getElementById("reservationModal");
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("reservationModal")).hide();
         loadReservations();
-      }, 600);
+        if (calendar) calendar.refetchEvents();
+      }, 400);
 
     } catch (err) {
       showAlert("form", "Network error: " + err.message, "danger");
@@ -534,10 +843,110 @@
     }
   }
 
-  //  Table load 
+  function renderRecentCheckins() {
+    const wrap = document.getElementById("recentCheckins");
+    if (!wrap) return;
+
+    const list = (reservationsCache || [])
+      .filter(r => String(r.status || "").toUpperCase() === "CHECKED_IN")
+      .slice(0, 6);
+
+    document.getElementById("checkInCount").textContent = String(list.length);
+
+    if (!list.length) {
+      wrap.innerHTML = `<div class="text-muted">No check-ins yet.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = list.map(r => `
+      <button class="btn btn-light border text-start" type="button" onclick="viewReservation(${r.reservationId})">
+        <div class="fw-semibold">${escapeHtml(r.guestName || ("Guest #" + r.guestId))}</div>
+        <div class="small text-muted">
+          Room ${escapeHtml(r.roomNumber || r.roomId)} • ${r.checkInDate} → ${r.checkOutDate}
+        </div>
+      </button>
+    `).join("");
+  }
+
+  function tooltipText(ep, fallbackTitle, startStr, endStr) {
+    return [
+      `Reservation: ${ep.reservationNumber || fallbackTitle || "-"}`,
+      `Guest: ${ep.guestName || "-"}`,
+      `Phone: ${ep.guestContactNumber || "-"}`,
+      `Room: ${ep.roomNumber || "-"}`,
+      `Dates: ${(ep.checkInDate || startStr || "-")} → ${(ep.checkOutDate || endStr || "-")}`,
+      `Status: ${ep.status || "-"}`
+    ].join("\n");
+  }
+
+  function initCalendarIfNeeded() {
+    if (calendar) return;
+
+    const el = document.getElementById("bookingsCalendar");
+    if (!el) return;
+
+    calendar = new FullCalendar.Calendar(el, {
+      initialView: "dayGridMonth",
+      height: "auto",
+
+      events: async (info, success, failure) => {
+        try {
+          const start = info.startStr.slice(0, 10);
+          const end = info.endStr.slice(0, 10);
+          const res = await fetch(`${BASE}/api/reservations/calendar?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, {
+            credentials: "same-origin"
+          });
+
+          const txt = await res.text();
+          let data = {};
+          try { data = JSON.parse(txt); } catch(e) {}
+
+          if (!res.ok) { failure(data); return; }
+
+          const events = (data.events || []).map(e => ({
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            end: e.end,
+            extendedProps: e.extendedProps || {}
+          }));
+
+          success(events);
+        } catch (e) {
+          failure(e);
+        }
+      },
+
+      eventMouseEnter: (info) => {
+        const ep = info.event.extendedProps || {};
+        info.el.setAttribute("title",
+          tooltipText(ep, info.event.title, info.event.startStr, info.event.endStr)
+        );
+
+        const t = bootstrap.Tooltip.getOrCreateInstance(info.el, {
+          container: "body",
+          trigger: "hover",
+          placement: "top"
+        });
+        t.show();
+      },
+
+      eventMouseLeave: (info) => {
+        const t = bootstrap.Tooltip.getInstance(info.el);
+        if (t) t.dispose();
+      },
+
+      eventClick: (info) => {
+        viewReservation(info.event.id);
+      }
+    });
+
+    calendar.render();
+  }
+
   async function loadReservations() {
     hideAlert("page");
-    tbody.innerHTML = `<tr><td colspan="7" class="text-muted">Loading...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-muted">Loading...</td></tr>`;
 
     try {
       const res = await fetch(`${BASE}/api/reservations`, { credentials: "same-origin" });
@@ -547,32 +956,63 @@
 
       if (!res.ok) {
         showAlert("page", data.message || "Failed to load reservations.", "danger");
-        tbody.innerHTML = `<tr><td colspan="7" class="text-danger">Failed to load.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load.</td></tr>`;
         return;
       }
 
       const list = data.reservations || [];
+      reservationsCache = list;
+
       if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-muted">No reservations found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-muted">No reservations found.</td></tr>`;
+        renderRecentCheckins();
         return;
       }
 
       tbody.innerHTML = list.map(r => `
         <tr>
           <td class="fw-semibold">${r.reservationId}</td>
-          <td>${r.guestName || r.guestId}</td>
-          <td>${r.guestEmail || "-"}</td>
-          <td>${r.roomNumber || r.roomId}</td>
+          <td>${escapeHtml(r.guestName || String(r.guestId || ""))}</td>
+          <td>${escapeHtml(r.guestEmail || "-")}</td>
+          <td>${escapeHtml(r.roomNumber || String(r.roomId || ""))}</td>
           <td>${r.checkInDate}</td>
           <td>${r.checkOutDate}</td>
-          <td><span class="badge bg-${r.status === 'CONFIRMED' ? 'success' : r.status === 'PENDING' ? 'warning' : 'info'}">${r.status}</span></td>
+          <td>
+            <span class="badge bg-${
+              r.status === 'CONFIRMED' ? 'success' :
+              r.status === 'PENDING' ? 'warning' :
+              r.status === 'CHECKED_IN' ? 'info' :
+              'secondary'
+            }">${escapeHtml(r.status || "-")}</span>
+          </td>
+          <td class="text-end">${(r.totalAmount != null) ? money(r.totalAmount) : "-"}</td>
+          <td class="text-end text-nowrap">
+            <button class="btn btn-outline-secondary btn-sm" onclick="viewReservation(${r.reservationId})">View</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="openEditReservationModal(${r.reservationId})">Edit</button>
+            <button class="btn btn-outline-primary btn-sm"
+                onclick="openInvoice(${r.reservationId})">
+          Invoice
+        </button>
+
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteReservation(${r.reservationId})">Delete</button>
+          </td>
         </tr>
       `).join("");
+
+      renderRecentCheckins();
+      if (calendar) calendar.refetchEvents();
+
     } catch (err) {
       showAlert("page", "Network error: " + err.message, "danger");
-      tbody.innerHTML = `<tr><td colspan="7" class="text-danger">Failed to load.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load.</td></tr>`;
     }
   }
+  
+  function openInvoice(reservationId) {
+	  const url = BASE + "/api/invoice?reservationId=" + encodeURIComponent(reservationId);
+	  window.open(url, "_blank");
+	}
+
 </script>
 </body>
 </html>
