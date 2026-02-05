@@ -31,15 +31,23 @@ public class AuthServlet extends HttpServlet {
 
         HttpSession session = req.getSession(true);
         session.setAttribute("user", user);
+        session.setMaxInactiveInterval(60 * 60); // 1 hour
+
+
+        Cookie userCookie = new Cookie("oceanview_user", user.getUsername());
+        userCookie.setPath(req.getContextPath()); 
+        userCookie.setMaxAge(3600);
+        resp.addCookie(userCookie);
+
+    
+
         System.out.println("Session created for " + user.getUsername() + " (Role: " + user.getRole() + ")");
 
         String ctxPath = req.getContextPath();
-        String role = user.getRole().toUpperCase();
+        String role = user.getRole() == null ? "" : user.getRole().toUpperCase();
 
-        if ("ADMIN".equals(role)) {
-            resp.sendRedirect(ctxPath + "/admin.html");
-        } else if ("STAFF".equals(role)) {
-            resp.sendRedirect(ctxPath + "/staff.html");
+        if ("ADMIN".equals(role) || "STAFF".equals(role)) {
+            resp.sendRedirect(ctxPath + "/dashboard.html");
         } else {
             resp.sendRedirect(ctxPath + "/guest.html");
         }

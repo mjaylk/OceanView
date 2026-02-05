@@ -49,9 +49,8 @@ public class GuestServlet extends HttpServlet {
             return;
         }
 
-        String path = req.getPathInfo(); // null, "/search"
+        String path = req.getPathInfo(); 
 
-        // ✅ /api/guests/search?q=...
         if ("/search".equals(path)) {
             String q = req.getParameter("q");
             List<Guest> guests = service.searchGuests(q);
@@ -73,9 +72,9 @@ public class GuestServlet extends HttpServlet {
             return;
         }
 
-        // ✅ Optional: get by email OR phone
+   
         String email = req.getParameter("email");
-        String phone = req.getParameter("phone"); // 👈 NEW param
+        String phone = req.getParameter("phone"); 
 
         if (email != null && !email.trim().isEmpty()) {
             Guest g = service.getGuestByEmail(email.trim());
@@ -97,7 +96,7 @@ public class GuestServlet extends HttpServlet {
             return;
         }
 
-        // ✅ list all guests
+  
         List<Guest> list = service.listGuests();
         StringBuilder sb = new StringBuilder("{\"success\":true,\"guests\":[");
         for (int i = 0; i < list.size(); i++) {
@@ -136,7 +135,7 @@ public class GuestServlet extends HttpServlet {
         String body = getBody(req);
 
         try {
-            Integer userId = null; // optional
+            Integer userId = null; 
             String fullName = extract(body, "fullName", "").trim();
             String address = extract(body, "address", "").trim();
             String contactNumber = extract(body, "contactNumber", "").trim();
@@ -146,12 +145,46 @@ public class GuestServlet extends HttpServlet {
             if (fullName.isEmpty()) throw new IllegalArgumentException("Full name required");
             if (contactNumber.isEmpty()) throw new IllegalArgumentException("Contact number required");
 
-            int id = service.createGuest(userId, fullName, address, contactNumber, email);
+            int id = service.createGuest(userId, fullName, address, contactNumber, email, email);
             sendJson(resp, 201, "{\"success\":true,\"guestId\":" + id + "}");
         } catch (Exception e) {
             sendJson(resp, 400, "{\"success\":false,\"message\":\"" + esc(e.getMessage()) + "\"}");
         }
     }
+    
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+     
+        if (!isStaffOrAdmin(req)) {
+            sendJson(resp, 403, "{\"success\":false,\"message\":\"Staff/Admin access required\"}");
+            return;
+        }
+
+        try {
+            String idStr = req.getParameter("id");
+
+            // basic validation
+            if (idStr == null || idStr.trim().isEmpty()) {
+                sendJson(resp, 400, "{\"success\":false,\"message\":\"id required\"}");
+                return;
+            }
+
+            int id = Integer.parseInt(idStr.trim());
+
+            boolean ok = service.deleteGuest(id);
+            if (!ok) {
+                sendJson(resp, 404, "{\"success\":false,\"message\":\"Guest not found\"}");
+                return;
+            }
+
+            sendJson(resp, 200, "{\"success\":true}");
+        } catch (NumberFormatException e) {
+            sendJson(resp, 400, "{\"success\":false,\"message\":\"Invalid id\"}");
+        } catch (Exception e) {
+            sendJson(resp, 500, "{\"success\":false,\"message\":\"" + esc(e.getMessage()) + "\"}");
+        }
+    }
+
 
     private String getBody(HttpServletRequest req) throws IOException {
         java.util.Scanner s = new java.util.Scanner(req.getInputStream()).useDelimiter("\\A");

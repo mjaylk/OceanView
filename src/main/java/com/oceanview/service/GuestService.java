@@ -10,8 +10,12 @@ public class GuestService {
 
     private final GuestDAO dao = new GuestDAOImpl();
 
-    public List<Guest> listGuests() {
-        return dao.findAll();
+    public List<Guest> listGuests() { return dao.findAll(); }
+
+
+    public Guest getGuestById(int id) {
+        if (id <= 0) return null;
+        return dao.findById(id);
     }
 
     public Guest getGuestByEmail(String email) {
@@ -28,25 +32,62 @@ public class GuestService {
         if (q == null || q.trim().length() < 2) return List.of();
         return dao.search(q.trim(), 10);
     }
- public int createGuest(Integer userId, String fullName, String address, String contactNumber, String email) {
-    if (fullName == null || fullName.trim().isEmpty())
-        throw new IllegalArgumentException("Full name required");
-    if (contactNumber == null || contactNumber.trim().isEmpty())
-        throw new IllegalArgumentException("Contact number required");
 
-    Guest g = new Guest();
-    g.setGuestId(0); // let DAO assign
-    g.setUserId(userId);
-    g.setFullName(fullName.trim());
-    g.setAddress(address != null && !address.trim().isEmpty() ? address.trim() : null);
-    g.setContactNumber(contactNumber.trim());
-    g.setEmail(email != null && !email.trim().isEmpty() ? email.trim() : null);
+    public int createGuest(Integer userId, String fullName, String address,
+                           String contactNumber, String email, String password) {
 
-    return dao.create(g);
-}
+        if (fullName == null || fullName.trim().isEmpty())
+            throw new IllegalArgumentException("Full name required");
+        if (contactNumber == null || contactNumber.trim().isEmpty())
+            throw new IllegalArgumentException("Contact number required");
+
+        Guest g = new Guest();
+        g.setGuestId(0);
+        g.setUserId(userId);
+        g.setFullName(fullName.trim());
+        g.setAddress(address != null && !address.trim().isEmpty() ? address.trim() : null);
+        g.setContactNumber(contactNumber.trim());
+        g.setEmail(email != null && !email.trim().isEmpty() ? email.trim() : null);
+
+        String pw = (password == null || password.trim().isEmpty()) ? "123456" : password.trim();
+        g.setPassword(pw);
+
+        return dao.create(g);
+    }
+
+ 
+    public boolean updateGuest(int guestId, String fullName, String address,
+                               String contactNumber, String email) {
+
+        if (guestId <= 0) throw new IllegalArgumentException("guestId required");
+        if (fullName == null || fullName.trim().isEmpty())
+            throw new IllegalArgumentException("Full name required");
+        if (contactNumber == null || contactNumber.trim().isEmpty())
+            throw new IllegalArgumentException("Contact number required");
+
+        Guest existing = dao.findById(guestId);
+        if (existing == null) return false;
+
+        existing.setFullName(fullName.trim());
+        existing.setAddress(address != null && !address.trim().isEmpty() ? address.trim() : null);
+        existing.setContactNumber(contactNumber.trim());
+        existing.setEmail(email != null && !email.trim().isEmpty() ? email.trim() : null);
+
+        return dao.update(existing);
+    }
+
+   
+    public boolean deleteGuest(int guestId) {
+        if (guestId <= 0) throw new IllegalArgumentException("guestId required");
+        return dao.delete(guestId);
+    }
 
 
     public int ensureGuest(String fullName, String email, String contactNumber) {
+        return ensureGuestWithPassword(fullName, email, contactNumber, null);
+    }
+
+    public int ensureGuestWithPassword(String fullName, String email, String contactNumber, String password) {
 
         if (fullName == null || fullName.trim().isEmpty())
             throw new IllegalArgumentException("Guest name required");
@@ -54,24 +95,39 @@ public class GuestService {
         if (contactNumber == null || contactNumber.trim().isEmpty())
             throw new IllegalArgumentException("Contact number required");
 
-        Guest g = dao.findByContactNumber(contactNumber.trim());
-        if (g != null) return g.getGuestId();
+        String phone = contactNumber.trim();
+        String em = (email == null ? null : email.trim());
 
-        // 2️⃣ fallback to email
-        if (email != null && !email.trim().isEmpty()) {
-            g = dao.findByEmail(email.trim());
-            if (g != null) return g.getGuestId();
+        Guest g = dao.findByContactNumber(phone);
+        if (g == null && em != null && !em.isEmpty()) {
+            g = dao.findByEmail(em);
+        }
+
+        String pw = (password == null || password.trim().isEmpty()) ? "123456" : password.trim();
+
+        if (g != null) {
+            if (g.getPassword() == null || g.getPassword().trim().isEmpty()) {
+                dao.updatePasswordById(g.getGuestId(), pw);
+            }
+            return g.getGuestId();
         }
 
         Guest ng = new Guest();
         ng.setUserId(null);
         ng.setFullName(fullName.trim());
         ng.setAddress(null);
-        ng.setContactNumber(contactNumber.trim());
-        ng.setEmail(email != null ? email.trim() : null);
+        ng.setContactNumber(phone);
+        ng.setEmail((em != null && !em.isEmpty()) ? em : null);
+        ng.setPassword(pw);
 
         int id = dao.create(ng);
         if (id <= 0) throw new IllegalStateException("Guest creation failed");
         return id;
+    }
+
+    public Guest loginGuest(String email, String password) {
+        if (email == null || email.trim().isEmpty()) throw new IllegalArgumentException("Email required");
+        if (password == null || password.trim().isEmpty()) throw new IllegalArgumentException("Password required");
+        return dao.findByEmailAndPassword(email.trim(), password.trim());
     }
 }

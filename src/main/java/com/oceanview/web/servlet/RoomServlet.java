@@ -8,7 +8,7 @@ import javax.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet("/api/rooms")
+@WebServlet("/api/rooms/*")
 public class RoomServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private RoomService roomService;
@@ -173,7 +173,7 @@ public class RoomServlet extends HttpServlet {
         return extract(json, key, "");
     }
 
-    // supports: "key":"text" AND "key":123 AND "key":null
+  
     private String extract(String json, String key, String defaultVal) {
         if (json == null) return defaultVal;
 

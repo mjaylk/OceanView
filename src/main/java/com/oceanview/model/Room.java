@@ -18,7 +18,7 @@ public class Room {
         this.maxGuests = maxGuests;
     }
     
-    // Getters/Setters
+
 
     public int getRoomId() { return roomId; }
     public void setRoomId(int roomId) { this.roomId = roomId; }

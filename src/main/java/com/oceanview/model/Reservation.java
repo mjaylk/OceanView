@@ -22,10 +22,10 @@ public class Reservation {
     private String guestName;
     private String guestEmail;
     private String roomNumber;
-    
     private String guestContactNumber;
     private String roomType;
 
+    private String notes;
 
     public Reservation() {}
 
@@ -79,21 +79,13 @@ public class Reservation {
 
     public String getRoomNumber() { return roomNumber; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
-    
-    public String getGuestContactNumber() {
-        return guestContactNumber;
-    }
 
-    public void setGuestContactNumber(String guestContactNumber) {
-        this.guestContactNumber = guestContactNumber;
-    }
+    public String getGuestContactNumber() { return guestContactNumber; }
+    public void setGuestContactNumber(String guestContactNumber) { this.guestContactNumber = guestContactNumber; }
 
-    public String getRoomType() {
-        return roomType;
-    }
+    public String getRoomType() { return roomType; }
+    public void setRoomType(String roomType) { this.roomType = roomType; }
 
-    public void setRoomType(String roomType) {
-        this.roomType = roomType;
-    }
-
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

@@ -12,15 +12,21 @@ public interface ReservationDAO {
 
     boolean hasOverlappingReservation(int roomId, Date checkIn, Date checkOut);
 
+   
+    boolean hasOverlappingReservationExceptSelf(int roomId, int reservationId, Date checkIn, Date checkOut);
+
     String findLastReservationNumberForDate(String yyyymmddPrefix);
 
     int create(Reservation reservation);
     boolean updateStatus(int reservationId, String status);
     boolean delete(int reservationId);
-    
-    boolean update(Reservation r);
 
+    boolean update(Reservation r);
 
     List<Reservation> findByRoom(int roomId);
     List<Reservation> findBetween(Date start, Date end);
+    List<Reservation> getRecentCheckins();
+    List<Reservation> findByGuestId(int guestId);
+
+
 }

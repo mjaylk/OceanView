@@ -2,6 +2,7 @@ package com.oceanview.web.servlet;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,11 +16,29 @@ public class LogoutServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+     
         HttpSession session = req.getSession(false);
         if (session != null) {
             session.invalidate();
             System.out.println("User logged out - session invalidated");
         }
+
+   
+        Cookie sessionCookie = new Cookie("admin_session", "");
+        sessionCookie.setPath("/");
+        sessionCookie.setMaxAge(0); 
+        resp.addCookie(sessionCookie);
+
+        Cookie userCookie = new Cookie("oceanview_user", "");
+        userCookie.setPath("/");
+        userCookie.setMaxAge(0); 
+        resp.addCookie(userCookie);
+
+    
+        resp.addHeader("X-Clear-SessionStorage", "true");
+
+        System.out.println("All cookies cleared - complete logout");
+
         resp.sendRedirect(req.getContextPath() + "/login.html");
     }
 

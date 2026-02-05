@@ -4,7 +4,6 @@ import com.oceanview.model.Guest;
 import java.util.List;
 
 public interface GuestDAO {
-
     List<Guest> findAll();
     Guest findById(int id);
     Guest findByEmail(String email);
@@ -14,8 +13,11 @@ public interface GuestDAO {
 
     int getNextGuestId();
     int create(Guest guest);
-
     boolean update(Guest guest);
-
     boolean delete(int id);
+
+    boolean updatePasswordById(int guestId, String password);
+
+  
+    Guest findByEmailAndPassword(String email, String password);
 }
