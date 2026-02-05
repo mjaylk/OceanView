@@ -31,7 +31,7 @@ public class GuestAuthServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         req.setCharacterEncoding("UTF-8");
 
-        // We read using getParameter because frontend sends x-www-form-urlencoded
+       
         String email = req.getParameter("email");
         String password = req.getParameter("password");
 

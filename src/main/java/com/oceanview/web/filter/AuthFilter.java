@@ -39,10 +39,7 @@ public class AuthFilter implements Filter {
         String uri = req.getRequestURI();
         String path = uri.substring(ctx.length());
 
-        /* 
-           Public resources must bypass, otherwise you get redirect loops.
-           This includes guest-login.html, because guest users do not have "user" session.
-        */
+  
         if (
                 path.equals("/login.html") ||
                 path.equals("/guest-login.html") ||
@@ -60,11 +57,6 @@ public class AuthFilter implements Filter {
 
         HttpSession session = req.getSession(false);
 
-        /* 
-           Two session types:
-           - staff/admin session: session attribute name "user"
-           - guest session: session attribute name "guest"
-        */
         User staffUser = null;
         Guest guestUser = null;
 

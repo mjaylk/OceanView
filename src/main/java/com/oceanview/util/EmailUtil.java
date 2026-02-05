@@ -7,10 +7,10 @@ import java.util.Properties;
 
 public class EmailUtil {
 
-    private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final String SMTP_PORT = "587";
-    private static final String SMTP_USER = "vimukthijayarathna31@gmail.com";
-    private static final String SMTP_PASS = "fthl mozi qfny esvr"; 
+    private static final String SMTP_HOST = "";
+    private static final String SMTP_PORT = "";
+    private static final String SMTP_USER = "";
+    private static final String SMTP_PASS = ""; 
 
     public static void send(String toEmail, String subject, String body) {
         if (toEmail == null || toEmail.trim().isEmpty()) return;
