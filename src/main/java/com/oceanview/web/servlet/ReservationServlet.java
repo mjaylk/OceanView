@@ -65,7 +65,25 @@ public class ReservationServlet extends HttpServlet {
         }
 
         String path = req.getPathInfo();
+        
         if (path == null) path = "";
+        
+        if ("/stats".equals(path)) {
+            int days = 30;
+            try {
+                String d = req.getParameter("days");
+                if (d != null && !d.trim().isEmpty()) days = Integer.parseInt(d.trim());
+            } catch (Exception ignored) {
+                days = 30;
+            }
+
+            if (days <= 0) days = 30;
+
+            String json = service.getDashboardStatsJson(days);
+            sendJson(resp, 200, json);
+            return;
+        }
+
 
         if ("/by-room".equals(path)) {
             String roomIdStr = req.getParameter("roomId");

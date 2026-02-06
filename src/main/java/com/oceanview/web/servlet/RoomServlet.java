@@ -1,29 +1,48 @@
 package com.oceanview.web.servlet;
 
 import com.oceanview.model.Room;
+import com.oceanview.model.User;
+import com.oceanview.service.ReservationService;
 import com.oceanview.service.RoomService;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.sql.Date;
 import java.util.List;
 
 @WebServlet("/api/rooms/*")
 public class RoomServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
+
     private RoomService roomService;
+    private ReservationService reservationService;
 
     @Override
     public void init() {
         roomService = new RoomService();
+        reservationService = new ReservationService();
+    }
+
+    private User sessionUser(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session == null) return null;
+        Object user = session.getAttribute("user");
+        return (user instanceof User) ? (User) user : null;
     }
 
     private boolean isAdmin(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session == null) return false;
-        Object user = session.getAttribute("user");
-        if (user == null) return false;
-        return "ADMIN".equalsIgnoreCase(((com.oceanview.model.User) user).getRole());
+        User u = sessionUser(req);
+        if (u == null) return false;
+        return "ADMIN".equalsIgnoreCase(u.getRole());
+    }
+
+    private boolean isStaffOrAdmin(HttpServletRequest req) {
+        User u = sessionUser(req);
+        if (u == null) return false;
+        String role = u.getRole();
+        return "ADMIN".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role);
     }
 
     private void sendJson(HttpServletResponse resp, int status, String json) throws IOException {
@@ -32,9 +51,9 @@ public class RoomServlet extends HttpServlet {
         resp.getWriter().write(json);
     }
 
-    private void denyAccess(HttpServletResponse resp) throws IOException {
+    private void denyAccess(HttpServletResponse resp, String message) throws IOException {
         sendJson(resp, HttpServletResponse.SC_FORBIDDEN,
-                "{\"success\":false,\"message\":\"Admin access required\"}");
+                "{\"success\":false,\"message\":\"" + esc(message) + "\"}");
     }
 
     private String esc(String s) {
@@ -47,11 +66,83 @@ public class RoomServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        String path = req.getPathInfo();
+        if (path == null) path = "";
+
+        // Availability is used by reservations, so STAFF/ADMIN should access it
+        // GET /api/rooms/availability?checkIn=2026-02-10&checkOut=2026-02-12
+        if ("/availability".equals(path)) {
+            if (!isStaffOrAdmin(req)) {
+                denyAccess(resp, "Staff/Admin access required");
+                return;
+            }
+
+            String checkInStr = req.getParameter("checkIn");
+            String checkOutStr = req.getParameter("checkOut");
+
+            if (checkInStr == null || checkOutStr == null || checkInStr.trim().isEmpty() || checkOutStr.trim().isEmpty()) {
+                sendJson(resp, 400, "{\"success\":false,\"message\":\"checkIn and checkOut required\"}");
+                return;
+            }
+
+            try {
+                Date checkIn = Date.valueOf(checkInStr.trim());
+                Date checkOut = Date.valueOf(checkOutStr.trim());
+
+                String json = reservationService.listRoomsWithAvailabilityJson(checkIn, checkOut);
+                sendJson(resp, 200, json);
+                return;
+
+            } catch (Exception e) {
+                sendJson(resp, 400, "{\"success\":false,\"message\":\"Invalid date format (use YYYY-MM-DD)\"}");
+                return;
+            }
+        }
+
+        // Everything else in rooms page is admin-only
         if (!isAdmin(req)) {
-            denyAccess(resp);
+            denyAccess(resp, "Admin access required");
             return;
         }
 
+        // Optional: /api/rooms/detail?id=1
+        if ("/detail".equals(path)) {
+            String idStr = req.getParameter("id");
+            if (idStr == null || idStr.trim().isEmpty()) {
+                sendJson(resp, 400, "{\"success\":false,\"message\":\"id required\"}");
+                return;
+            }
+
+            try {
+                int id = Integer.parseInt(idStr.trim());
+                Room r = roomService.getRoom(id);
+                if (r == null) {
+                    sendJson(resp, 404, "{\"success\":false,\"message\":\"Room not found\"}");
+                    return;
+                }
+
+                sendJson(resp, 200,
+                        "{\"success\":true,\"room\":{" +
+                                "\"roomId\":" + r.getRoomId() + "," +
+                                "\"roomNumber\":\"" + esc(r.getRoomNumber()) + "\"," +
+                                "\"roomType\":\"" + esc(r.getRoomType()) + "\"," +
+                                "\"price\":" + r.getRatePerNight() + "," +
+                                "\"maxGuests\":" + r.getMaxGuests() + "," +
+                                "\"status\":\"" + esc(r.getStatus()) + "\"," +
+                                "\"description\":\"" + esc(r.getDescription()) + "\"," +
+                                "\"imageUrl\":\"" + esc(r.getImageUrl()) + "\"" +
+                                "}}"
+                );
+                return;
+
+            } catch (NumberFormatException e) {
+                sendJson(resp, 400, "{\"success\":false,\"message\":\"Invalid id\"}");
+                return;
+            }
+        }
+
+        // Default: list all rooms (admin)
         try {
             List<Room> rooms = roomService.listRooms();
             StringBuilder sb = new StringBuilder("{\"success\":true,\"rooms\":[");
@@ -66,7 +157,8 @@ public class RoomServlet extends HttpServlet {
                         .append("\"price\":").append(r.getRatePerNight()).append(",")
                         .append("\"maxGuests\":").append(r.getMaxGuests()).append(",")
                         .append("\"status\":\"").append(esc(r.getStatus())).append("\",")
-                        .append("\"description\":\"\"")
+                        .append("\"description\":\"").append(esc(r.getDescription())).append("\",")
+                        .append("\"imageUrl\":\"").append(esc(r.getImageUrl())).append("\"")
                         .append("}");
 
                 if (i < rooms.size() - 1) sb.append(",");
@@ -82,22 +174,29 @@ public class RoomServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (!isAdmin(req)) {
-            denyAccess(resp);
+            denyAccess(resp, "Admin access required");
             return;
         }
 
         String body = getBody(req);
 
         try {
-            String roomNumber = extract(body, "roomNumber");
-            String roomType = extract(body, "roomType");
+            String roomNumber = extract(body, "roomNumber", "").trim();
+            String roomType = extract(body, "roomType", "").trim();
             double price = Double.parseDouble(extract(body, "price", "0"));
             int maxGuests = Integer.parseInt(extract(body, "maxGuests", "2"));
-            String status = extract(body, "status", "AVAILABLE");
+            String status = extract(body, "status", "AVAILABLE").trim();
 
-            int newId = roomService.createRoom(roomNumber, roomType, price, status, maxGuests);
+            String description = extract(body, "description", "").trim();
+            String imageUrl = extract(body, "imageUrl", "").trim();
 
+            if (roomNumber.isEmpty()) throw new IllegalArgumentException("Room number required");
+            if (roomType.isEmpty()) throw new IllegalArgumentException("Room type required");
+
+            int newId = roomService.createRoom(roomNumber, roomType, price, status, maxGuests, description, imageUrl);
             sendJson(resp, 201, "{\"success\":true,\"roomId\":" + newId + "}");
+        } catch (NumberFormatException e) {
+            sendJson(resp, 400, "{\"success\":false,\"message\":\"Invalid number format\"}");
         } catch (Exception e) {
             sendJson(resp, 400, "{\"success\":false,\"message\":\"" + esc(e.getMessage()) + "\"}");
         }
@@ -106,34 +205,37 @@ public class RoomServlet extends HttpServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (!isAdmin(req)) {
-            denyAccess(resp);
+            denyAccess(resp, "Admin access required");
             return;
         }
 
         String body = getBody(req);
 
         try {
-            String roomIdStr = extract(body, "roomId", "");
-            if (roomIdStr.trim().isEmpty() || "null".equalsIgnoreCase(roomIdStr) || "0".equals(roomIdStr)) {
+            String roomIdStr = extract(body, "roomId", "").trim();
+            if (roomIdStr.isEmpty() || "null".equalsIgnoreCase(roomIdStr) || "0".equals(roomIdStr)) {
                 sendJson(resp, 400, "{\"success\":false,\"message\":\"Room ID required for update\"}");
                 return;
             }
 
             int id = Integer.parseInt(roomIdStr);
 
-            String roomNumber = extract(body, "roomNumber");
-            String roomType = extract(body, "roomType");
+            String roomNumber = extract(body, "roomNumber", "").trim();
+            String roomType = extract(body, "roomType", "").trim();
             double price = Double.parseDouble(extract(body, "price", "0"));
             int maxGuests = Integer.parseInt(extract(body, "maxGuests", "2"));
-            String status = extract(body, "status", "AVAILABLE");
+            String status = extract(body, "status", "AVAILABLE").trim();
 
-            boolean ok = roomService.updateRoom(id, roomNumber, roomType, price, status, maxGuests);
+            String description = extract(body, "description", "").trim();
+            String imageUrl = extract(body, "imageUrl", "").trim();
 
-            if (ok) {
-                sendJson(resp, 200, "{\"success\":true}");
-            } else {
-                sendJson(resp, 404, "{\"success\":false,\"message\":\"Room not found\"}");
-            }
+            if (roomNumber.isEmpty()) throw new IllegalArgumentException("Room number required");
+            if (roomType.isEmpty()) throw new IllegalArgumentException("Room type required");
+
+            boolean ok = roomService.updateRoom(id, roomNumber, roomType, price, status, maxGuests, description, imageUrl);
+
+            if (ok) sendJson(resp, 200, "{\"success\":true}");
+            else sendJson(resp, 404, "{\"success\":false,\"message\":\"Room not found\"}");
         } catch (NumberFormatException e) {
             sendJson(resp, 400, "{\"success\":false,\"message\":\"Invalid number format\"}");
         } catch (Exception e) {
@@ -144,18 +246,18 @@ public class RoomServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (!isAdmin(req)) {
-            denyAccess(resp);
+            denyAccess(resp, "Admin access required");
             return;
         }
 
         String idStr = req.getParameter("id");
-        if (idStr == null) {
+        if (idStr == null || idStr.trim().isEmpty()) {
             sendJson(resp, 400, "{\"success\":false,\"message\":\"ID required\"}");
             return;
         }
 
         try {
-            int id = Integer.parseInt(idStr);
+            int id = Integer.parseInt(idStr.trim());
             boolean ok = roomService.deleteRoom(id);
             if (ok) sendJson(resp, 200, "{\"success\":true}");
             else sendJson(resp, 404, "{\"success\":false,\"message\":\"Room not found\"}");
@@ -169,11 +271,6 @@ public class RoomServlet extends HttpServlet {
         return s.hasNext() ? s.next() : "";
     }
 
-    private String extract(String json, String key) {
-        return extract(json, key, "");
-    }
-
-  
     private String extract(String json, String key, String defaultVal) {
         if (json == null) return defaultVal;
 
@@ -182,7 +279,6 @@ public class RoomServlet extends HttpServlet {
         if (start == -1) return defaultVal;
 
         start += search.length();
-
         while (start < json.length() && Character.isWhitespace(json.charAt(start))) start++;
         if (start >= json.length()) return defaultVal;
 

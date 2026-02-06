@@ -76,6 +76,21 @@ public class GuestService {
         return dao.update(existing);
     }
 
+    
+    public int getGuestIdByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) return 0;
+        Guest g = dao.findByEmail(email.trim());
+        return (g == null) ? 0 : g.getGuestId();
+    }
+
+    public void updateGuestPassword(int guestId, String password) {
+        if (guestId <= 0) throw new IllegalArgumentException("Invalid guestId");
+        if (password == null || password.trim().isEmpty()) throw new IllegalArgumentException("Password required");
+
+        boolean ok = dao.updatePassword(guestId, password.trim());
+        if (!ok) throw new RuntimeException("Failed to update guest password");
+    }
+
    
     public boolean deleteGuest(int guestId) {
         if (guestId <= 0) throw new IllegalArgumentException("guestId required");

@@ -7,6 +7,8 @@ public class Room {
     private double ratePerNight;
     private String status;
     private int maxGuests;
+    private String description;
+    private String imageUrl;
    
     public Room() {}
     
@@ -37,6 +39,22 @@ public class Room {
     
     public int getMaxGuests() {return maxGuests;}
     public void setMaxGuests(int maxGuests) {this.maxGuests = maxGuests;}
+    
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 
     @Override
     public String toString() {

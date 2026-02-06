@@ -182,7 +182,8 @@
             <select class="form-select" id="status" required>
               <option value="PENDING">Pending</option>
               <option value="CONFIRMED">Confirmed</option>
-              <option value="CHECKED_IN">Checked-in</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="CHECKED_OUT">Checked Out</option>
             </select>
           </div>
 
@@ -204,14 +205,14 @@
           </div>
           
           <div class="col-md-3">
-  <label class="form-label">Tax (%)</label>
-  <input type="number" class="form-control" id="calcTax" step="0.01"  min="0">
-</div>
-<div class="col-md-3">
-  <label class="form-label">Discount ($)</label>
-  <input type="number" class="form-control" id="calcDiscount" step="0.01" value="0" min="0">
-</div>
-          
+            <label class="form-label">Tax (%)</label>
+            <input type="number" class="form-control" id="calcTax" step="0.01" value="0" min="0">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Discount ($)</label>
+            <input type="number" class="form-control" id="calcDiscount" step="0.01" value="0" min="0">
+          </div>
 
           <div class="col-md-3">
             <label class="form-label">Total</label>

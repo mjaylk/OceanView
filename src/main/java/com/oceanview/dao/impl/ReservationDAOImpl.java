@@ -1,6 +1,9 @@
 package com.oceanview.dao.impl;
 
 import com.oceanview.dao.ReservationDAO;
+import com.oceanview.model.ReservationDailyCount;
+
+
 import com.oceanview.model.Reservation;
 import com.oceanview.util.DatabaseConnection;
 
@@ -95,7 +98,7 @@ public class ReservationDAOImpl implements ReservationDAO {
             "SELECT COUNT(*) " +
             "FROM reservations " +
             "WHERE room_id=? " +
-            "  AND status IN ('CONFIRMED','CHECKED_IN') " +
+            "  AND status IN ('CONFIRMED','CHECKED_IN','PENDING') " +
             "  AND check_in_date < ? " +
             "  AND check_out_date > ?";
 
@@ -123,7 +126,7 @@ public class ReservationDAOImpl implements ReservationDAO {
             "FROM reservations " +
             "WHERE room_id=? " +
             "  AND reservation_id <> ? " +
-            "  AND status IN ('CONFIRMED','CHECKED_IN') " +
+            "  AND status IN ('CONFIRMED','CHECKED_IN','PENDING') " +
             "  AND check_in_date < ? " +
             "  AND check_out_date > ?";
 
@@ -145,42 +148,47 @@ public class ReservationDAOImpl implements ReservationDAO {
         }
     }
 
-@Override
-public int create(Reservation r) {
-    String sql =
-        "INSERT INTO reservations " +
-        "(reservation_number, guest_id, room_id, check_in_date, check_out_date, " +
-        " nights, rate_per_night, subtotal, tax, discount, total_amount, status, notes, created_by) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    @Override
+    public int create(Reservation r) {
+        String sql =
+            "INSERT INTO reservations " +
+            "(reservation_number, guest_id, room_id, check_in_date, check_out_date, " +
+            " nights, rate_per_night, subtotal, tax, discount, total_amount, status, notes, created_by) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-        ps.setString(1, r.getReservationNumber());
-        ps.setInt(2, r.getGuestId());
-        ps.setInt(3, r.getRoomId());
-        ps.setDate(4, r.getCheckInDate());
-        ps.setDate(5, r.getCheckOutDate());
-        ps.setInt(6, r.getNights());
-        ps.setDouble(7, r.getRatePerNight());
-        ps.setDouble(8, r.getSubtotal());
-        ps.setDouble(9, r.getTax());
-        ps.setDouble(10, r.getDiscount());
-        ps.setDouble(11, r.getTotalAmount());
-        ps.setString(12, r.getStatus());
-        ps.setString(13, r.getNotes() == null ? "" : r.getNotes());
-        ps.setInt(14, r.getCreatedBy());
+            ps.setString(1, r.getReservationNumber());
+            ps.setInt(2, r.getGuestId());
+            ps.setInt(3, r.getRoomId());
+            ps.setDate(4, r.getCheckInDate());
+            ps.setDate(5, r.getCheckOutDate());
+            ps.setInt(6, r.getNights());
+            ps.setDouble(7, r.getRatePerNight());
+            ps.setDouble(8, r.getSubtotal());
+            ps.setDouble(9, r.getTax());
+            ps.setDouble(10, r.getDiscount());
+            ps.setDouble(11, r.getTotalAmount());
+            ps.setString(12, r.getStatus());
+            ps.setString(13, r.getNotes() == null ? "" : r.getNotes());
+            ps.setInt(14, r.getCreatedBy());
 
-        ps.executeUpdate();
+            ps.executeUpdate();
 
-        try (ResultSet keys = ps.getGeneratedKeys()) {
-            return keys.next() ? keys.getInt(1) : 0;
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int id = keys.getInt(1);
+                    updateRoomStatus(conn, r.getRoomId());
+                    return id;
+                }
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to create reservation", e);
         }
-
-    } catch (SQLException e) {
-        throw new RuntimeException("Failed to create reservation", e);
     }
-}
 
 
     @Override
@@ -192,7 +200,16 @@ public int create(Reservation r) {
 
             ps.setString(1, status);
             ps.setInt(2, reservationId);
-            return ps.executeUpdate() > 0;
+            boolean updated = ps.executeUpdate() > 0;
+            
+            if (updated) {
+                Reservation r = findById(reservationId);
+                if (r != null) {
+                    updateRoomStatus(conn, r.getRoomId());
+                }
+            }
+            
+            return updated;
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update reservation status", e);
@@ -208,6 +225,12 @@ public int create(Reservation r) {
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int oldRoomId = 0;
+            Reservation old = findById(r.getReservationId());
+            if (old != null) {
+                oldRoomId = old.getRoomId();
+            }
 
             ps.setInt(1, r.getGuestId());
             ps.setInt(2, r.getRoomId());
@@ -225,7 +248,16 @@ public int create(Reservation r) {
 
             ps.setInt(13, r.getReservationId());
 
-            return ps.executeUpdate() > 0;
+            boolean updated = ps.executeUpdate() > 0;
+            
+            if (updated) {
+                updateRoomStatus(conn, r.getRoomId());
+                if (oldRoomId > 0 && oldRoomId != r.getRoomId()) {
+                    updateRoomStatus(conn, oldRoomId);
+                }
+            }
+            
+            return updated;
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update reservation", e);
@@ -239,11 +271,87 @@ public int create(Reservation r) {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
+            Reservation r = findById(reservationId);
+            int roomId = (r != null) ? r.getRoomId() : 0;
+
             ps.setInt(1, reservationId);
-            return ps.executeUpdate() > 0;
+            boolean deleted = ps.executeUpdate() > 0;
+            
+            if (deleted && roomId > 0) {
+                updateRoomStatus(conn, roomId);
+            }
+            
+            return deleted;
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete reservation", e);
+        }
+    }
+    
+    @Override
+    public boolean hasBookingInRange(int roomId, Date checkIn, Date checkOut) {
+        String sql =
+                "SELECT COUNT(*) " +
+                "FROM reservations " +
+                "WHERE room_id=? " +
+                "AND UPPER(status) IN ('PENDING','CONFIRMED','CHECKED_IN') " +
+                "AND check_in_date < ? " +
+                "AND check_out_date > ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, roomId);
+            ps.setDate(2, checkOut);
+            ps.setDate(3, checkIn);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check booking in range", e);
+        }
+    }
+
+    private void updateRoomStatus(Connection conn, int roomId) throws SQLException {
+        String checkSql = 
+            "SELECT COUNT(*) FROM reservations " +
+            "WHERE room_id = ? " +
+            "AND UPPER(status) IN ('PENDING','CONFIRMED','CHECKED_IN') " +
+            "AND check_in_date <= CURDATE() " +
+            "AND check_out_date > CURDATE()";
+        
+        try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
+            ps.setInt(1, roomId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                boolean hasActiveBooking = rs.getInt(1) > 0;
+                
+                String currentStatusSql = "SELECT status FROM rooms WHERE room_id = ?";
+                String currentStatus = "AVAILABLE";
+                try (PreparedStatement ps2 = conn.prepareStatement(currentStatusSql)) {
+                    ps2.setInt(1, roomId);
+                    try (ResultSet rs2 = ps2.executeQuery()) {
+                        if (rs2.next()) {
+                            currentStatus = rs2.getString(1);
+                        }
+                    }
+                }
+                
+                if ("MAINTENANCE".equalsIgnoreCase(currentStatus)) {
+                    return;
+                }
+                
+                String newStatus = hasActiveBooking ? "BOOKED" : "AVAILABLE";
+                String updateSql = "UPDATE rooms SET status = ? WHERE room_id = ?";
+                try (PreparedStatement ps3 = conn.prepareStatement(updateSql)) {
+                    ps3.setString(1, newStatus);
+                    ps3.setInt(2, roomId);
+                    ps3.executeUpdate();
+                }
+            }
         }
     }
 
@@ -349,6 +457,8 @@ public int create(Reservation r) {
         return r;
     }
 
+    
+    
     private Reservation map(ResultSet rs) throws SQLException {
         Reservation r = mapBasic(rs);
 
@@ -448,6 +558,126 @@ public int create(Reservation r) {
         }
     }
 
+    @Override
+    public int countBetween(Date start, Date end) {
+        String sql =
+                "SELECT COUNT(*) " +
+                "FROM reservations " +
+                "WHERE check_in_date >= ? AND check_in_date <= ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, start);
+            ps.setDate(2, end);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to count reservations", e);
+        }
+
+        return 0;
+    }
+
+    @Override
+    public double sumRevenueBetween(Date start, Date end) {
+        String sql =
+                "SELECT COALESCE(SUM(total_amount), 0) " +
+                "FROM reservations " +
+                "WHERE check_in_date >= ? AND check_in_date <= ? " +
+                "AND UPPER(status) IN ('CONFIRMED','CHECKED_IN','COMPLETED')";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, start);
+            ps.setDate(2, end);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to sum revenue", e);
+        }
+
+        return 0.0;
+    }
+
+    
+    @Override
+    public int countAllReservations() {
+        String sql = "SELECT COUNT(*) FROM reservations";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            return rs.next() ? rs.getInt(1) : 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to count all reservations", e);
+        }
+    }
+
+    @Override
+    public int countOccupiedRoomsToday(Date today) {
+        String sql =
+                "SELECT COUNT(DISTINCT room_id) " +
+                "FROM reservations " +
+                "WHERE UPPER(status) IN ('CONFIRMED','CHECKED_IN') " +
+                "AND check_in_date <= ? " +
+                "AND check_out_date > ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, today);
+            ps.setDate(2, today);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to count occupied rooms today", e);
+        }
+    }
 
 
+    
+    @Override
+    public List<ReservationDailyCount> countPerDayBetween(Date start, Date end) {
+        String sql =
+                "SELECT check_in_date AS day, COUNT(*) AS cnt " +
+                "FROM reservations " +
+                "WHERE check_in_date >= ? AND check_in_date <= ? " +
+                "GROUP BY check_in_date " +
+                "ORDER BY check_in_date";
+
+        List<ReservationDailyCount> out = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, start);
+            ps.setDate(2, end);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Date day = rs.getDate("day");
+                    int cnt = rs.getInt("cnt");
+                    out.add(new ReservationDailyCount(day, cnt));
+                }
+            }
+
+            return out;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to count reservations per day", e);
+        }
+    }
 }

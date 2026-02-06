@@ -13,6 +13,7 @@
   <style>
     #roomCalendar .fc-daygrid-event { cursor: pointer; }
     #roomCalendar .fc .fc-toolbar-title { font-size: 1.1rem; }
+    .room-thumb { width: 44px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e5e5; }
   </style>
 </head>
 <body>
@@ -22,8 +23,6 @@
 </button>
 
 <div id="sidebarMount"></div>
-
-
 
 <div class="main-content">
   <header class="d-flex justify-content-between align-items-center mb-4">
@@ -58,6 +57,7 @@
         <label class="form-label fw-medium">Room Number</label>
         <input type="text" class="form-control" id="roomNumber" placeholder="101" required>
       </div>
+
       <div class="col-md-3">
         <label class="form-label fw-medium">Type</label>
         <select class="form-select" id="roomType" required>
@@ -66,19 +66,22 @@
           <option value="SUITE">Ocean Suite</option>
         </select>
       </div>
+
       <div class="col-md-2">
         <label class="form-label fw-medium">Price/Night</label>
         <input type="number" class="form-control" id="price" min="50" step="0.01" required>
       </div>
+
       <div class="col-md-2">
         <label class="form-label fw-medium">Max Guests</label>
         <input type="number" class="form-control" id="maxGuests" min="1" max="10" value="2">
       </div>
+
       <div class="col-md-2">
         <label class="form-label fw-medium">Status</label>
         <select class="form-select" id="status" required>
           <option value="AVAILABLE">Available</option>
-          <option value="OCCUPIED">Occupied</option>
+          <option value="BOOKED">Booked</option>
           <option value="MAINTENANCE">Maintenance</option>
         </select>
       </div>
@@ -86,6 +89,12 @@
       <div class="col-12">
         <label class="form-label fw-medium">Description</label>
         <textarea class="form-control" id="description" rows="2" placeholder="Room features, view, amenities..."></textarea>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-medium">Room Image URL</label>
+        <input class="form-control" id="imageUrl" placeholder="https://example.com/room.jpg">
+        <div class="form-text">Paste a public image URL. (Later we can add file upload.)</div>
       </div>
 
       <div class="col-12 d-flex justify-content-end gap-2 mt-4">
@@ -121,19 +130,20 @@
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0" id="roomsTable">
         <thead class="table-dark">
-        <tr>
-          <th style="width:80px;">ID</th>
-          <th>Room #</th>
-          <th>Type</th>
-          <th>Price</th>
-          <th>Guests</th>
-          <th>Status</th>
-          <th>Description</th>
-          <th class="text-end" style="width:160px;">Actions</th>
-        </tr>
+          <tr>
+            <th style="width:80px;">ID</th>
+            <th>Room #</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Guests</th>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Image</th>
+            <th class="text-end" style="width:160px;">Actions</th>
+          </tr>
         </thead>
         <tbody>
-        <tr><td colspan="8" class="text-center py-4 text-muted">Loading rooms...</td></tr>
+          <tr><td colspan="9" class="text-center py-4 text-muted">Loading rooms...</td></tr>
         </tbody>
       </table>
     </div>
@@ -224,7 +234,7 @@
 
   async function loadRooms() {
     hideAlert('page');
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4">
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">
         <div class="spinner-border text-primary" role="status"></div>
         <span class="ms-2">Loading rooms...</span>
       </td></tr>`;
@@ -237,7 +247,7 @@
         let msg = "Cannot load rooms";
         try { msg = JSON.parse(txt).message || msg; } catch(e) {}
         showAlert('page', msg, 'danger');
-        tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center py-4">Failed to load data</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-danger text-center py-4">Failed to load data</td></tr>`;
         return;
       }
 
@@ -248,11 +258,19 @@
       populateCalendarRooms(rooms);
 
       if (!rooms.length) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-muted text-center py-4">No rooms found. <strong>Add your first room above!</strong></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-muted text-center py-4">No rooms found. <strong>Add your first room above!</strong></td></tr>`;
         return;
       }
 
-      tbody.innerHTML = rooms.map(r => `
+      tbody.innerHTML = rooms.map(r => {
+        const img = (r.imageUrl || "").trim();
+        const imgCell = img
+          ? `<a href="${escapeHtml(img)}" target="_blank" rel="noopener">
+               <img class="room-thumb" src="${escapeHtml(img)}" alt="Room image">
+             </a>`
+          : `<span class="text-muted">-</span>`;
+
+        return `
         <tr>
           <td class="fw-semibold">${r.roomId}</td>
           <td><strong class="text-primary">${escapeHtml(r.roomNumber)}</strong></td>
@@ -261,6 +279,7 @@
           <td><span class="badge bg-light text-dark border px-2">${r.maxGuests || 2}</span></td>
           <td><span class="badge ${r.status === 'AVAILABLE' ? 'bg-success' : r.status === 'OCCUPIED' ? 'bg-warning' : 'bg-danger'} px-3 py-2">${escapeHtml(r.status)}</span></td>
           <td class="text-truncate" style="max-width: 150px;" title="${escapeHtml(r.description || '')}">${escapeHtml(r.description || '-')}</td>
+          <td>${imgCell}</td>
           <td class="text-end">
             <button class="btn btn-sm btn-outline-primary me-1" onclick='editRoom(${JSON.stringify(r)})' title="Edit">
               <i class="fas fa-pen"></i>
@@ -269,9 +288,8 @@
               <i class="fas fa-trash"></i>
             </button>
           </td>
-        </tr>
-      `).join("");
-
+        </tr>`;
+      }).join("");
 
       refreshRoomCalendar();
 
@@ -288,6 +306,7 @@
     }
 
     const roomIdVal = document.getElementById("roomId").value;
+
     const formData = {
       roomId: roomIdVal || null,
       roomNumber,
@@ -295,7 +314,8 @@
       price: parseFloat(document.getElementById("price").value),
       maxGuests: parseInt(document.getElementById("maxGuests").value),
       status: document.getElementById("status").value,
-      description: document.getElementById("description").value
+      description: document.getElementById("description").value.trim(),
+      imageUrl: document.getElementById("imageUrl").value.trim()
     };
 
     const method = roomIdVal ? 'PUT' : 'POST';
@@ -308,14 +328,17 @@
         body: JSON.stringify(formData)
       });
 
-      const result = await response.json();
+      const resultText = await response.text();
+      let result = {};
+      try { result = JSON.parse(resultText); } catch (e) {}
 
       if (response.ok && result.success !== false) {
         loadRooms();
         resetForm();
         showAlert('room', roomIdVal ? 'Room updated successfully!' : 'Room added successfully!', 'success');
       } else {
-        showAlert('room', result.message || 'Save failed', 'danger');
+        showAlert('room', (result.message || 'Save failed'), 'danger');
+        console.log("Save error response:", resultText);
       }
     } catch (err) {
       showAlert('room', 'Network error: ' + err.message, 'danger');
@@ -330,6 +353,7 @@
     document.getElementById("maxGuests").value = room.maxGuests || 2;
     document.getElementById("status").value = room.status;
     document.getElementById("description").value = room.description || '';
+    document.getElementById("imageUrl").value = room.imageUrl || '';
 
     hideAlert('room');
     updateFormMode(true);
@@ -357,11 +381,13 @@
   }
 
   function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('active');
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('active');
   }
 
   function escapeHtml(s) {
-    return String(s)
+    return String(s || "")
       .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
   }
@@ -418,35 +444,7 @@
         }
       },
 
-      eventMouseEnter: (info) => {
-        const ep = info.event.extendedProps || {};
-        const tip = [
-          `Reservation: ${ep.reservationNumber || info.event.title || "-"}`,
-          `Guest: ${ep.guestName || "-"}`,
-          `Phone: ${ep.guestContactNumber || "-"}`,
-          `Room: ${ep.roomNumber || "-"}`,
-          `Dates: ${(ep.checkInDate || info.event.startStr || "-")} → ${(ep.checkOutDate || info.event.endStr || "-")}`,
-          `Status: ${ep.status || "-"}`
-        ].join("<br>");
-
-        info.el.setAttribute("title", tip);
-
-        const t = bootstrap.Tooltip.getOrCreateInstance(info.el, {
-          container: "body",
-          trigger: "hover",
-          placement: "top",
-          html: true
-        });
-        t.show();
-      },
-
-      eventMouseLeave: (info) => {
-        const t = bootstrap.Tooltip.getInstance(info.el);
-        if (t) t.dispose();
-      },
-
-      eventClick: (info) => {
-
+      eventClick: () => {
         window.open("reservation.html", "_blank");
       }
     });
@@ -466,6 +464,7 @@
     roomCalendar.refetchEvents();
   }
 </script>
-</body>
+
 <script src="assets/js/layout.js"></script>
+</body>
 </html>

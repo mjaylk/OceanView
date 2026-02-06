@@ -13,7 +13,8 @@ public class RoomDAOImpl implements RoomDAO {
     @Override
     public List<Room> findAll() {
         List<Room> rooms = new ArrayList<>();
-        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status FROM rooms ORDER BY room_number";
+        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status, description, image_url " +
+                     "FROM rooms ORDER BY room_number";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -29,7 +30,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public Room findById(int id) {
-        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status FROM rooms WHERE room_id = ?";
+        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status, description, image_url " +
+                     "FROM rooms WHERE room_id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -47,7 +49,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public Room findByNumber(String roomNumber) {
-        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status FROM rooms WHERE room_number = ?";
+        String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status, description, image_url " +
+                     "FROM rooms WHERE room_number = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -65,7 +68,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public int create(Room room) {
-        String sql = "INSERT INTO rooms (room_number, room_type, rate_per_night, max_guests, status) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO rooms (room_number, room_type, rate_per_night, max_guests, status, description, image_url) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -75,6 +79,8 @@ public class RoomDAOImpl implements RoomDAO {
             ps.setDouble(3, room.getRatePerNight());
             ps.setInt(4, room.getMaxGuests());
             ps.setString(5, room.getStatus());
+            ps.setString(6, room.getDescription());
+            ps.setString(7, room.getImageUrl());
 
             ps.executeUpdate();
 
@@ -89,7 +95,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public boolean update(Room room) {
-        String sql = "UPDATE rooms SET room_number=?, room_type=?, rate_per_night=?, max_guests=?, status=? WHERE room_id=?";
+        String sql = "UPDATE rooms SET room_number=?, room_type=?, rate_per_night=?, max_guests=?, status=?, description=?, image_url=? " +
+                     "WHERE room_id=?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -99,7 +106,9 @@ public class RoomDAOImpl implements RoomDAO {
             ps.setDouble(3, room.getRatePerNight());
             ps.setInt(4, room.getMaxGuests());
             ps.setString(5, room.getStatus());
-            ps.setInt(6, room.getRoomId());
+            ps.setString(6, room.getDescription());
+            ps.setString(7, room.getImageUrl());
+            ps.setInt(8, room.getRoomId());
 
             return ps.executeUpdate() > 0;
 
@@ -149,6 +158,8 @@ public class RoomDAOImpl implements RoomDAO {
         room.setRatePerNight(rs.getDouble("rate_per_night"));
         room.setMaxGuests(rs.getInt("max_guests"));
         room.setStatus(rs.getString("status"));
+        room.setDescription(rs.getString("description"));
+        room.setImageUrl(rs.getString("image_url"));
         return room;
     }
 }

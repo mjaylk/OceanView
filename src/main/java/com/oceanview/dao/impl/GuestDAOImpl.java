@@ -223,6 +223,23 @@ public class GuestDAOImpl implements GuestDAO {
             throw new RuntimeException("Failed to update guest password", e);
         }
     }
+    
+    @Override
+    public boolean updatePassword(int guestId, String password) {
+        String sql = "UPDATE guests SET password = ? WHERE guest_id = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, password);
+            ps.setInt(2, guestId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update guest password", e);
+        }
+    }
+
 
     @Override
     public boolean delete(int id) {
