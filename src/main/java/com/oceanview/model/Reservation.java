@@ -3,6 +3,10 @@ package com.oceanview.model;
 import java.sql.Date;
 
 public class Reservation {
+
+    // model class
+    // data holder
+
     private int reservationId;
     private String reservationNumber;
     private int guestId;
@@ -12,6 +16,7 @@ public class Reservation {
     private String status;
     private int createdBy;
 
+    // billing fields
     private int nights;
     private double ratePerNight;
     private double subtotal;
@@ -19,16 +24,24 @@ public class Reservation {
     private double discount;
     private double totalAmount;
 
+    // payment fields
+    private double amountPaid;
+    private String paymentStatus;
+
+    // display fields
     private String guestName;
     private String guestEmail;
     private String roomNumber;
     private String guestContactNumber;
     private String roomType;
 
+    // optional notes
     private String notes;
 
+    // default constructor
     public Reservation() {}
 
+    // getter setter
     public int getReservationId() { return reservationId; }
     public void setReservationId(int reservationId) { this.reservationId = reservationId; }
 
@@ -70,6 +83,12 @@ public class Reservation {
 
     public double getTotalAmount() { return totalAmount; }
     public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
+
+    public double getAmountPaid() { return amountPaid; }
+    public void setAmountPaid(double amountPaid) { this.amountPaid = amountPaid; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
 
     public String getGuestName() { return guestName; }
     public void setGuestName(String guestName) { this.guestName = guestName; }

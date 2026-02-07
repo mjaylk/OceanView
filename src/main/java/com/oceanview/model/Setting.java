@@ -3,6 +3,10 @@ package com.oceanview.model;
 import java.sql.Timestamp;
 
 public class Setting {
+
+    // model class
+    // config data
+
     private int settingId;
     private String settingKey;
     private String settingValue;
@@ -11,14 +15,17 @@ public class Setting {
     private Timestamp updatedAt;
     private Integer updatedBy;
 
+    // default constructor
     public Setting() {}
 
+    // parameter constructor
     public Setting(String settingKey, String settingValue, String settingCategory) {
         this.settingKey = settingKey;
         this.settingValue = settingValue;
         this.settingCategory = settingCategory;
     }
 
+    // getter setter
     public int getSettingId() {
         return settingId;
     }
@@ -67,6 +74,7 @@ public class Setting {
         this.updatedAt = updatedAt;
     }
 
+  
     public Integer getUpdatedBy() {
         return updatedBy;
     }

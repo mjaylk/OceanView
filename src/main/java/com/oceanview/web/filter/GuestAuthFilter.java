@@ -10,6 +10,7 @@ import java.io.IOException;
 @WebFilter({"/guest-reservations.html", "/api/guest/*"})
 public class GuestAuthFilter implements Filter {
 
+    // bypass paths
     private boolean bypass(String path) {
         return path.equals("/api/guest/login")
                 || path.equals("/api/guest/logout");
@@ -26,6 +27,7 @@ public class GuestAuthFilter implements Filter {
         String uri = req.getRequestURI();
         String path = uri.substring(ctx.length());
 
+        // allow login and logout
         if (bypass(path)) {
             chain.doFilter(request, response);
             return;
@@ -34,11 +36,13 @@ public class GuestAuthFilter implements Filter {
         HttpSession session = req.getSession(false);
         Guest guest = (session != null) ? (Guest) session.getAttribute("guest") : null;
 
+        // guest not logged in
         if (guest == null) {
             if (path.endsWith(".html")) {
                 resp.sendRedirect(ctx + "/guest-login.html");
                 return;
             }
+
             resp.setStatus(401);
             resp.setContentType("application/json;charset=UTF-8");
             resp.getWriter().write("{\"success\":false,\"message\":\"Guest login required\"}");
@@ -48,6 +52,9 @@ public class GuestAuthFilter implements Filter {
         chain.doFilter(request, response);
     }
 
-    @Override public void init(FilterConfig filterConfig) {}
-    @Override public void destroy() {}
+    @Override
+    public void init(FilterConfig filterConfig) {}
+
+    @Override
+    public void destroy() {}
 }

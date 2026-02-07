@@ -1,3 +1,4 @@
+
 const BASE = "/OceanViewResortBooking";
 const tbody = document.querySelector("#resTable tbody");
 const roomsById = new Map();
@@ -9,34 +10,52 @@ let reservationsCache = [];
 let calendar = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("todayLabel").textContent = new Date().toLocaleDateString();
-  bindPricingListeners();        
+  const todayLabel = document.getElementById("todayLabel");
+  if (todayLabel) todayLabel.textContent = new Date().toLocaleDateString();
+
+  bindPricingListeners();
+  wireModalPricingRebind();
+  wireSafeFieldListeners();
+
   loadReservations();
   initCalendarIfNeeded();
-  wireModalPricingRebind();      
 });
 
 function showAlert(scope, message, level = "danger") {
   const wrap = document.getElementById(scope + "AlertWrap");
   const alert = document.getElementById(scope + "Alert");
   const msg = document.getElementById(scope + "AlertMsg");
+  if (!wrap || !alert || !msg) return;
+
   wrap.style.display = "block";
   alert.className = `alert alert-${level} alert-dismissible fade show`;
   msg.textContent = message;
 }
+
 function hideAlert(scope) {
-  document.getElementById(scope + "AlertWrap").style.display = "none";
+  const wrap = document.getElementById(scope + "AlertWrap");
+  if (wrap) wrap.style.display = "none";
 }
 
 function setSaving(isSaving) {
-  document.getElementById("btnSave").disabled = isSaving;
-  document.getElementById("btnSaveSpinner").style.display = isSaving ? "inline-block" : "none";
+  const btn = document.getElementById("btnSave");
+  const sp = document.getElementById("btnSaveSpinner");
+  if (btn) btn.disabled = isSaving;
+  if (sp) sp.style.display = isSaving ? "inline-block" : "none";
 }
 
 function todayIso() { return new Date().toISOString().slice(0, 10); }
 function money(v) { const n = Number(v || 0); return "$" + n.toFixed(2); }
 
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+}
+
 function setStatusBadge(el, status) {
+  if (!el) return;
+
   const s = String(status || "").toUpperCase();
   el.textContent = s || "-";
   el.className = "badge " + (
@@ -58,7 +77,9 @@ function openNewReservationModal() {
 }
 
 function resetReservationForm() {
-  document.getElementById("reservationForm").reset();
+  const form = document.getElementById("reservationForm");
+  if (form) form.reset();
+
   document.getElementById("reservationId").value = "";
   document.getElementById("guestId").value = "";
   document.getElementById("calcTax").value = "0";
@@ -67,14 +88,17 @@ function resetReservationForm() {
   document.getElementById("roomBlockedHint").textContent = "";
   document.getElementById("guestSuggestions").innerHTML = "";
   bookedRanges = [];
+
   hideAlert("form");
   renderCalc({ nights: "", rate: "", subtotal: "", total: "" });
 }
 
 function lockPastDates() {
   const min = todayIso();
-  document.getElementById("checkIn").min = min;
-  document.getElementById("checkOut").min = min;
+  const inEl = document.getElementById("checkIn");
+  const outEl = document.getElementById("checkOut");
+  if (inEl) inEl.min = min;
+  if (outEl) outEl.min = min;
 }
 
 function parseIsoDate(s) {
@@ -95,7 +119,6 @@ function validateAgainstBooked() {
   const roomId = Number(document.getElementById("roomId").value || 0);
   const inD = document.getElementById("checkIn").value;
   const outD = document.getElementById("checkOut").value;
-
   const editingId = Number(document.getElementById("reservationId").value || 0);
 
   if (!roomId || !inD || !outD) return true;
@@ -191,12 +214,12 @@ function bindPricingListeners() {
   if (taxEl) {
     taxEl.oninput = recalcPricing;
     taxEl.onchange = recalcPricing;
-    taxEl.onkeyup = recalcPricing; 
+    taxEl.onkeyup = recalcPricing;
   }
   if (discEl) {
     discEl.oninput = recalcPricing;
     discEl.onchange = recalcPricing;
-    discEl.onkeyup = recalcPricing; 
+    discEl.onkeyup = recalcPricing;
   }
 }
 
@@ -210,42 +233,55 @@ function wireModalPricingRebind() {
   });
 }
 
-document.getElementById("checkIn").addEventListener("change", () => {
-  hideAlert("form");
-  const inD = document.getElementById("checkIn").value;
-  if (inD) document.getElementById("checkOut").min = inD;
-  validateAgainstBooked();
-  recalcPricing();
-});
+function wireSafeFieldListeners() {
+  const inEl = document.getElementById("checkIn");
+  const outEl = document.getElementById("checkOut");
+  const roomEl = document.getElementById("roomId");
 
-document.getElementById("checkOut").addEventListener("change", () => {
-  hideAlert("form");
-  validateAgainstBooked();
-  recalcPricing();
-});
-
-document.getElementById("roomId").addEventListener("change", async () => {
-  const roomId = Number(document.getElementById("roomId").value || 0);
-  const room = roomsById.get(String(roomId));
-  const meta = document.getElementById("roomMeta");
-
-  if (!room) {
-    meta.textContent = "";
-    recalcPricing();
-    return;
+  if (inEl) {
+    inEl.addEventListener("change", () => {
+      hideAlert("form");
+      const inD = inEl.value;
+      if (inD && outEl) outEl.min = inD;
+      validateAgainstBooked();
+      recalcPricing();
+    });
   }
 
-  const rate = getRoomRate(room);
-  meta.textContent = `Max guests: ${room.maxGuests ?? 2} | Status: ${room.status} | Rate: ${money(rate)}`;
+  if (outEl) {
+    outEl.addEventListener("change", () => {
+      hideAlert("form");
+      validateAgainstBooked();
+      recalcPricing();
+    });
+  }
 
-  await loadBookedRangesForRoom(room.roomId);
-  validateAgainstBooked();
-  recalcPricing();
-});
+  if (roomEl) {
+    roomEl.addEventListener("change", async () => {
+      const roomId = Number(roomEl.value || 0);
+      const room = roomsById.get(String(roomId));
+      const meta = document.getElementById("roomMeta");
+
+      if (!room) {
+        if (meta) meta.textContent = "";
+        recalcPricing();
+        return;
+      }
+
+      const rate = getRoomRate(room);
+      if (meta) meta.textContent = `Max guests: ${room.maxGuests ?? 2} | Status: ${room.status} | Rate: ${money(rate)}`;
+
+      await loadBookedRangesForRoom(room.roomId);
+      validateAgainstBooked();
+      recalcPricing();
+    });
+  }
+}
 
 function initGuestSearch() {
   const input = document.getElementById("guestSearch");
   const dl = document.getElementById("guestSuggestions");
+  if (!input || !dl) return;
 
   if (input.dataset.bound === "1") return;
   input.dataset.bound = "1";
@@ -293,6 +329,7 @@ function initGuestSearch() {
     const val = input.value.trim();
     const g = lastGuestResults.find(x => (`${x.fullName} | ${x.email || "-"} | ${x.contactNumber || "-"}`) === val);
     if (!g) return;
+
     document.getElementById("guestId").value = g.guestId;
     document.getElementById("guestName").value = g.fullName || "";
     document.getElementById("guestEmail").value = g.email || "";
@@ -300,23 +337,18 @@ function initGuestSearch() {
   });
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-}
-
 async function loadRoomsDropdown() {
   const sel = document.getElementById("roomId");
   const meta = document.getElementById("roomMeta");
+  if (!sel) return;
 
   sel.innerHTML = `<option value="">Loading rooms...</option>`;
   roomsById.clear();
-  meta.textContent = "";
+  if (meta) meta.textContent = "";
   bookedRanges = [];
-  document.getElementById("roomBlockedHint").textContent = "";
+  const hint = document.getElementById("roomBlockedHint");
+  if (hint) hint.textContent = "";
 
-  // Use today's date for availability check - this endpoint allows STAFF access
   const today = todayIso();
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -359,7 +391,8 @@ async function loadRoomsDropdown() {
 
 async function loadBookedRangesForRoom(roomId) {
   bookedRanges = [];
-  document.getElementById("roomBlockedHint").textContent = "";
+  const hint = document.getElementById("roomBlockedHint");
+  if (hint) hint.textContent = "";
   if (!roomId) return;
 
   try {
@@ -370,8 +403,8 @@ async function loadBookedRangesForRoom(roomId) {
     if (!res.ok) return;
 
     bookedRanges = data.bookings || [];
-    if (bookedRanges.length) {
-      document.getElementById("roomBlockedHint").textContent =
+    if (bookedRanges.length && hint) {
+      hint.textContent =
         `Blocked ranges: ` + bookedRanges.slice(0, 3).map(b => `${b.checkInDate} → ${b.checkOutDate}`).join(" , ")
         + (bookedRanges.length > 3 ? " ..." : "");
     }
@@ -413,9 +446,32 @@ async function viewReservation(id) {
     document.getElementById("vSubtotal").textContent = money(r.subtotal ?? 0);
     document.getElementById("vTax").textContent = money(r.tax ?? 0);
     document.getElementById("vTotal").textContent = money(r.totalAmount ?? 0);
-    document.getElementById("vDiscount").textContent = money(r.discount ?? 0);
+    document.getElementById("vDiscount").textContent = `Discount: ${money(r.discount ?? 0)}`;
+
+    document.getElementById("vPaid").textContent = money(r.amountPaid ?? 0);
+    document.getElementById("vPayStatus").textContent = String(r.paymentStatus || "UNPAID");
 
     document.getElementById("vNotes").textContent = r.notes || "-";
+
+    // payment button logic
+    const paymentStatus = String(r.paymentStatus || "UNPAID").toUpperCase();
+    const amountPaid = Number(r.amountPaid || 0);
+    const totalAmount = Number(r.totalAmount || 0);
+    const remaining = round2(totalAmount - amountPaid);
+
+    const paymentBtn = document.getElementById("vPaymentBtn");
+    if (paymentBtn) {
+      if (paymentStatus !== "PAID" && remaining > 0) {
+        paymentBtn.style.display = "inline-block";
+        paymentBtn.onclick = () => {
+          const vm = bootstrap.Modal.getInstance(document.getElementById("viewReservationModal"));
+          if (vm) vm.hide();
+          openPaymentModal(r.reservationId);
+        };
+      } else {
+        paymentBtn.style.display = "none";
+      }
+    }
 
     document.getElementById("vEditBtn").onclick = () => {
       bootstrap.Modal.getOrCreateInstance(document.getElementById("viewReservationModal")).hide();
@@ -523,9 +579,9 @@ async function saveReservation() {
   const nights = calcNights(inD, outD);
   const subtotal = round2(nights * rate);
 
-  const taxRate = getTaxRateInput();         
-  const discount = getDiscountInput();        
-  const tax = round2(subtotal * (taxRate / 100)); 
+  const taxRate = getTaxRateInput();
+  const discount = getDiscountInput();
+  const tax = round2(subtotal * (taxRate / 100));
   let totalAmount = round2(subtotal + tax - discount);
   if (totalAmount < 0) totalAmount = 0;
 
@@ -544,8 +600,8 @@ async function saveReservation() {
     nights,
     ratePerNight: rate,
     subtotal,
-    tax,          
-    taxRate,       
+    tax,
+    taxRate,
     discount,
     totalAmount
   };
@@ -605,10 +661,11 @@ function renderRecentCheckins() {
 
   const list = (reservationsCache || [])
     .filter(r => ["CHECKED_IN", "CONFIRMED"].includes(String(r.status || "").toUpperCase()))
-    .sort((a, b) => new Date(b.checkInDate) - new Date(a.checkInDate))  
+    .sort((a, b) => new Date(b.checkInDate) - new Date(a.checkInDate))
     .slice(0, 6);
 
-  document.getElementById("checkInCount").textContent = String(list.length);
+  const count = document.getElementById("checkInCount");
+  if (count) count.textContent = String(list.length);
 
   if (!list.length) {
     wrap.innerHTML = `<div class="text-muted">No recent reservations.</div>`;
@@ -616,26 +673,21 @@ function renderRecentCheckins() {
   }
 
   wrap.innerHTML = list.map(r => `
-    <button class="btn btn-light border text-start ${r.status === 'CHECKED_IN' ? 'border-info' : 'border-success'} text-start" 
+    <button class="btn btn-light border text-start ${r.status === 'CHECKED_IN' ? 'border-info' : 'border-success'}"
             type="button" onclick="viewReservation(${r.reservationId})">
       <div class="fw-semibold">${escapeHtml(r.guestName || ("Guest #" + (r.guestId || "")))}</div>
       <div class="small text-muted">
-        Room ${escapeHtml(r.roomNumber || (r.roomId || ""))} • 
+        Room ${escapeHtml(r.roomNumber || (r.roomId || ""))} •
         ${r.checkInDate || "-"} → ${r.checkOutDate || "-"}
       </div>
       <div class="small">
         <span class="badge ${
-          r.status === 'CHECKED_IN' ? 'bg-info' : 
+          r.status === 'CHECKED_IN' ? 'bg-info' :
           r.status === 'CONFIRMED' ? 'bg-success' : 'bg-secondary'
-        }">${r.status || "-"}</span>
+        }">${escapeHtml(r.status || "-")}</span>
       </div>
     </button>
   `).join("");
-
-  wrap.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('mouseenter', () => btn.classList.add('shadow-sm'));
-    btn.addEventListener('mouseleave', () => btn.classList.remove('shadow-sm'));
-  });
 }
 
 function tooltipText(ep, fallbackTitle, startStr, endStr) {
@@ -646,7 +698,7 @@ function tooltipText(ep, fallbackTitle, startStr, endStr) {
     `Room: ${ep.roomNumber || "-"}`,
     `Dates: ${(ep.checkInDate || startStr || "-")} → ${(ep.checkOutDate || endStr || "-")}`,
     `Status: ${ep.status || "-"}`
-  ].join('\n');  
+  ].join("\n");
 }
 
 function initCalendarIfNeeded() {
@@ -690,9 +742,7 @@ function initCalendarIfNeeded() {
 
     eventMouseEnter: (info) => {
       const ep = info.event.extendedProps || {};
-      info.el.setAttribute("title",
-        tooltipText(ep, info.event.title, info.event.startStr, info.event.endStr)
-      );
+      info.el.setAttribute("title", tooltipText(ep, info.event.title, info.event.startStr, info.event.endStr));
 
       const t = bootstrap.Tooltip.getOrCreateInstance(info.el, {
         container: "body",
@@ -717,7 +767,7 @@ function initCalendarIfNeeded() {
 
 async function loadReservations() {
   hideAlert("page");
-  tbody.innerHTML = `<tr><td colspan="9" class="text-muted">Loading...</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-muted">Loading...</td></tr>`;
 
   try {
     const res = await fetch(`${BASE}/api/reservations`, { credentials: "same-origin" });
@@ -727,7 +777,7 @@ async function loadReservations() {
 
     if (!res.ok) {
       showAlert("page", data.message || "Failed to load reservations.", "danger");
-      tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load.</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load.</td></tr>`;
       return;
     }
 
@@ -735,47 +785,214 @@ async function loadReservations() {
     reservationsCache = list;
 
     if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="9" class="text-muted">No reservations found.</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-muted">No reservations found.</td></tr>`;
       renderRecentCheckins();
       return;
     }
 
-    tbody.innerHTML = list.map(r => `
-      <tr>
-        <td class="fw-semibold">${r.reservationId}</td>
-        <td>${escapeHtml(r.guestName || String(r.guestId || ""))}</td>
-        <td>${escapeHtml(r.guestEmail || "-")}</td>
-        <td>${escapeHtml(r.roomNumber || String(r.roomId || ""))}</td>
-        <td>${r.checkInDate}</td>
-        <td>${r.checkOutDate}</td>
-        <td>
-          <span class="badge bg-${
-            r.status === 'CONFIRMED' ? 'success' :
-            r.status === 'PENDING' ? 'warning' :
-            r.status === 'CHECKED_IN' ? 'info' :
-            'secondary'
-          }">${escapeHtml(r.status || "-")}</span>
-        </td>
-        <td class="text-end">${(r.totalAmount != null) ? money(r.totalAmount) : "-"}</td>
-        <td class="text-end text-nowrap">
-          <button class="btn btn-outline-secondary btn-sm" onclick="viewReservation(${r.reservationId})">View</button>
-          <button class="btn btn-outline-secondary btn-sm" onclick="openEditReservationModal(${r.reservationId})">Edit</button>
-          <button class="btn btn-outline-primary btn-sm" onclick="openInvoice(${r.reservationId})">Invoice</button>
-          <button class="btn btn-outline-danger btn-sm" onclick="deleteReservation(${r.reservationId})">Delete</button>
-        </td>
-      </tr>
-    `).join("");
+    if (tbody) {
+      tbody.innerHTML = list.map(r => `
+        <tr>
+          <td class="fw-semibold">${r.reservationId}</td>
+          <td>${escapeHtml(r.guestName || String(r.guestId || ""))}</td>
+          <td>${escapeHtml(r.guestEmail || "-")}</td>
+          <td>${escapeHtml(r.roomNumber || String(r.roomId || ""))}</td>
+          <td>${r.checkInDate}</td>
+          <td>${r.checkOutDate}</td>
+          <td>
+            <span class="badge bg-${
+              r.status === 'CONFIRMED' ? 'success' :
+              r.status === 'PENDING' ? 'warning' :
+              r.status === 'CHECKED_IN' ? 'info' : 'secondary'
+            }">${escapeHtml(r.status || "-")}</span>
+          </td>
+          <td class="text-end">${(r.totalAmount != null) ? money(r.totalAmount) : "-"}</td>
+          <td class="text-end text-nowrap">
+            <button class="btn btn-outline-secondary btn-sm" onclick="viewReservation(${r.reservationId})">View</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="openEditReservationModal(${r.reservationId})">Edit</button>
+            <button class="btn btn-outline-primary btn-sm" onclick="openInvoice(${r.reservationId})">Invoice</button>
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteReservation(${r.reservationId})">Delete</button>
+          </td>
+        </tr>
+      `).join("");
+    }
 
     renderRecentCheckins();
     if (calendar) calendar.refetchEvents();
 
   } catch (err) {
     showAlert("page", "Network error: " + err.message, "danger");
-    tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load.</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load.</td></tr>`;
   }
 }
 
 function openInvoice(reservationId) {
   const url = BASE + "/api/invoice?reservationId=" + encodeURIComponent(reservationId);
   window.open(url, "_blank");
+}
+
+/* ------------------- PAYMENT (FIXED) ------------------- */
+
+function showPaymentAlert(message, level = "danger") {
+  showAlert("payment", message, level);
+}
+
+function openPaymentModal(reservationId) {
+  hideAlert("payment");
+
+  const modal = new bootstrap.Modal(document.getElementById("paymentModal"));
+  document.getElementById("paymentReservationId").value = reservationId;
+  document.getElementById("paymentForm").reset();
+
+  fetch(`${BASE}/api/reservations/detail?id=${encodeURIComponent(reservationId)}`, { credentials: "same-origin" })
+    .then(async r => {
+      const txt = await r.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch (e) {}
+      if (!r.ok) throw new Error(data.message || "Failed to load reservation details");
+      return data;
+    })
+    .then(data => {
+      const res = data.reservation;
+      const remaining = round2(Number(res.totalAmount || 0) - Number(res.amountPaid || 0));
+
+      document.getElementById("paymentRemaining").textContent = remaining.toFixed(2);
+
+      const amt = document.getElementById("paymentAmount");
+      amt.max = String(remaining);
+      amt.value = remaining > 0 ? remaining.toFixed(2) : "0.00";
+    })
+    .catch(err => {
+      showPaymentAlert(err.message, "danger");
+    });
+
+  loadPaymentHistory(reservationId);
+  modal.show();
+}
+
+function loadPaymentHistory(reservationId) {
+  const body = document.getElementById("paymentHistoryBody");
+  if (body) body.innerHTML = `<tr><td colspan="4" class="text-muted">Loading...</td></tr>`;
+
+  fetch(`${BASE}/api/payments/history?reservationId=${encodeURIComponent(reservationId)}`, { credentials: "same-origin" })
+    .then(async r => {
+      const txt = await r.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch (e) {}
+      if (!r.ok) throw new Error(data.message || "Failed to load payment history");
+      return data;
+    })
+    .then(data => {
+      const tbodyEl = document.getElementById("paymentHistoryBody");
+      if (!tbodyEl) return;
+
+      tbodyEl.innerHTML = "";
+
+      const payments = data.payments || [];
+      if (!payments.length) {
+        tbodyEl.innerHTML = `<tr><td colspan="4" class="text-muted">No payments yet</td></tr>`;
+        return;
+      }
+
+      payments.forEach(p => {
+        const paidDate = p.paidDate ? new Date(p.paidDate) : null;
+        const dateText = paidDate && !isNaN(paidDate.getTime())
+          ? paidDate.toLocaleString()
+          : "-";
+
+        const amt = Number(p.paidAmount || 0);
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${escapeHtml(dateText)}</td>
+          <td>$${amt.toFixed(2)}</td>
+          <td>${escapeHtml(p.method || "-")}</td>
+          <td>${escapeHtml(p.note || "-")}</td>
+        `;
+        tbodyEl.appendChild(row);
+      });
+    })
+    .catch(err => {
+      const tbodyEl = document.getElementById("paymentHistoryBody");
+      if (tbodyEl) tbodyEl.innerHTML = `<tr><td colspan="4" class="text-danger">${escapeHtml(err.message)}</td></tr>`;
+    });
+}
+
+function savePayment() {
+  hideAlert("payment");
+
+  const reservationId = Number(document.getElementById("paymentReservationId").value || 0);
+  const amount = parseFloat(document.getElementById("paymentAmount").value);
+  const method = document.getElementById("paymentMethod").value;
+  const note = document.getElementById("paymentNote").value;
+
+  if (!reservationId) {
+    showPaymentAlert("Reservation id missing.", "danger");
+    return;
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showPaymentAlert("Please enter a valid amount.", "danger");
+    return;
+  }
+
+  const remaining = parseFloat(document.getElementById("paymentRemaining").textContent || "0");
+  if (Number.isFinite(remaining) && amount > remaining) {
+    showPaymentAlert("Amount cannot be greater than remaining balance.", "warning");
+    return;
+  }
+
+  const payload = {
+    reservationId: reservationId,
+    amount: amount,
+    method: method,
+    note: note
+  };
+
+  fetch(`${BASE}/api/payments`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(async r => {
+      const txt = await r.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch (e) {}
+      if (!r.ok) throw new Error(data.message || "Payment failed");
+      return data;
+    })
+    .then(() => {
+      showAlert("page", "Payment added successfully.", "success");
+      document.getElementById("paymentForm").reset();
+
+      loadPaymentHistory(reservationId);
+      loadReservations();
+
+      return fetch(`${BASE}/api/reservations/detail?id=${encodeURIComponent(reservationId)}`, { credentials: "same-origin" });
+    })
+    .then(async r => {
+      const txt = await r.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch (e) {}
+      if (!r.ok) throw new Error(data.message || "Failed to refresh remaining");
+
+      const resv = data.reservation;
+      const newRemaining = round2(Number(resv.totalAmount || 0) - Number(resv.amountPaid || 0));
+
+      document.getElementById("paymentRemaining").textContent = newRemaining.toFixed(2);
+
+      const amtEl = document.getElementById("paymentAmount");
+      amtEl.max = String(newRemaining);
+      amtEl.value = newRemaining > 0 ? newRemaining.toFixed(2) : "0.00";
+
+      if (newRemaining <= 0) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById("paymentModal"));
+        if (modal) modal.hide();
+        showAlert("page", "Reservation fully paid.", "success");
+      }
+    })
+    .catch(err => {
+      showPaymentAlert(err.message, "danger");
+    });
 }

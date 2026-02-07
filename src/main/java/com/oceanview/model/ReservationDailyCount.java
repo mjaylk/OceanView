@@ -4,17 +4,23 @@ import java.sql.Date;
 
 public class ReservationDailyCount {
 
+    // model class
+    // report data
+
     private Date day;
     private int count;
 
+    // default constructor
     public ReservationDailyCount() {
     }
 
+    // parameter constructor
     public ReservationDailyCount(Date day, int count) {
         this.day = day;
         this.count = count;
     }
 
+    // getter setter
     public Date getDay() {
         return day;
     }

@@ -2,8 +2,6 @@ package com.oceanview.dao.impl;
 
 import com.oceanview.dao.ReservationDAO;
 import com.oceanview.model.ReservationDailyCount;
-
-
 import com.oceanview.model.Reservation;
 import com.oceanview.util.DatabaseConnection;
 
@@ -13,12 +11,17 @@ import java.util.List;
 
 public class ReservationDAOImpl implements ReservationDAO {
 
+    // dao implementation
+  
     @Override
     public List<Reservation> findAll() {
+
+        // join query
         String sql =
             "SELECT r.reservation_id, r.reservation_number, r.guest_id, r.room_id, " +
             "       r.check_in_date, r.check_out_date, r.status, r.notes, r.created_by, " +
             "       r.nights, r.rate_per_night, r.subtotal, r.tax, r.discount, r.total_amount, " +
+            "       r.amount_paid, r.payment_status, " +
             "       g.full_name AS guest_name, g.email AS guest_email, g.contact_number AS guest_phone, " +
             "       rm.room_number AS room_number, rm.room_type AS room_type " +
             "FROM reservations r " +
@@ -28,10 +31,12 @@ public class ReservationDAOImpl implements ReservationDAO {
 
         List<Reservation> list = new ArrayList<>();
 
+        // database read
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
+            // result mapping
             while (rs.next()) list.add(map(rs));
             return list;
 
@@ -42,10 +47,13 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public Reservation findById(int id) {
+
+        // search by id
         String sql =
             "SELECT r.reservation_id, r.reservation_number, r.guest_id, r.room_id, " +
             "       r.check_in_date, r.check_out_date, r.status, r.notes, r.created_by, " +
             "       r.nights, r.rate_per_night, r.subtotal, r.tax, r.discount, r.total_amount, " +
+            "       r.amount_paid, r.payment_status, " +
             "       g.full_name AS guest_name, g.email AS guest_email, g.contact_number AS guest_phone, " +
             "       rm.room_number AS room_number, rm.room_type AS room_type " +
             "FROM reservations r " +
@@ -57,6 +65,7 @@ public class ReservationDAOImpl implements ReservationDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
+
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
             }
@@ -68,10 +77,13 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public Reservation findByNumber(String reservationNumber) {
+
+        // search by number
         String sql =
             "SELECT r.reservation_id, r.reservation_number, r.guest_id, r.room_id, " +
             "       r.check_in_date, r.check_out_date, r.status, r.notes, r.created_by, " +
             "       r.nights, r.rate_per_night, r.subtotal, r.tax, r.discount, r.total_amount, " +
+            "       r.amount_paid, r.payment_status, " +
             "       g.full_name AS guest_name, g.email AS guest_email, g.contact_number AS guest_phone, " +
             "       rm.room_number AS room_number, rm.room_type AS room_type " +
             "FROM reservations r " +
@@ -83,6 +95,7 @@ public class ReservationDAOImpl implements ReservationDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, reservationNumber);
+
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
             }
@@ -94,6 +107,8 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public boolean hasOverlappingReservation(int roomId, Date checkIn, Date checkOut) {
+
+        // overlap check
         String sql =
             "SELECT COUNT(*) " +
             "FROM reservations " +
@@ -121,6 +136,8 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public boolean hasOverlappingReservationExceptSelf(int roomId, int reservationId, Date checkIn, Date checkOut) {
+
+        // overlap check update
         String sql =
             "SELECT COUNT(*) " +
             "FROM reservations " +
@@ -144,17 +161,20 @@ public class ReservationDAOImpl implements ReservationDAO {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check overlap (except self)", e);
+            throw new RuntimeException("Failed to check overlap except self", e);
         }
     }
 
     @Override
     public int create(Reservation r) {
+
+        // insert booking
         String sql =
             "INSERT INTO reservations " +
             "(reservation_number, guest_id, room_id, check_in_date, check_out_date, " +
-            " nights, rate_per_night, subtotal, tax, discount, total_amount, status, notes, created_by) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            " nights, rate_per_night, subtotal, tax, discount, total_amount, " +
+            " amount_paid, payment_status, status, notes, created_by) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -170,12 +190,15 @@ public class ReservationDAOImpl implements ReservationDAO {
             ps.setDouble(9, r.getTax());
             ps.setDouble(10, r.getDiscount());
             ps.setDouble(11, r.getTotalAmount());
-            ps.setString(12, r.getStatus());
-            ps.setString(13, r.getNotes() == null ? "" : r.getNotes());
-            ps.setInt(14, r.getCreatedBy());
+            ps.setDouble(12, 0.0); // amount_paid
+            ps.setString(13, "UNPAID"); // payment_status
+            ps.setString(14, r.getStatus());
+            ps.setString(15, r.getNotes() == null ? "" : r.getNotes());
+            ps.setInt(16, r.getCreatedBy());
 
             ps.executeUpdate();
 
+            // room status update
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) {
                     int id = keys.getInt(1);
@@ -190,9 +213,10 @@ public class ReservationDAOImpl implements ReservationDAO {
         }
     }
 
-
     @Override
     public boolean updateStatus(int reservationId, String status) {
+
+        // status update
         String sql = "UPDATE reservations SET status=? WHERE reservation_id=?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -200,15 +224,15 @@ public class ReservationDAOImpl implements ReservationDAO {
 
             ps.setString(1, status);
             ps.setInt(2, reservationId);
+
             boolean updated = ps.executeUpdate() > 0;
-            
+
+            // sync room status
             if (updated) {
                 Reservation r = findById(reservationId);
-                if (r != null) {
-                    updateRoomStatus(conn, r.getRoomId());
-                }
+                if (r != null) updateRoomStatus(conn, r.getRoomId());
             }
-            
+
             return updated;
 
         } catch (SQLException e) {
@@ -218,6 +242,8 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public boolean update(Reservation r) {
+
+        // update booking
         String sql =
             "UPDATE reservations SET guest_id=?, room_id=?, check_in_date=?, check_out_date=?, status=?, notes=?, " +
             "nights=?, rate_per_night=?, subtotal=?, tax=?, discount=?, total_amount=? " +
@@ -226,11 +252,10 @@ public class ReservationDAOImpl implements ReservationDAO {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
+            // old room track
             int oldRoomId = 0;
             Reservation old = findById(r.getReservationId());
-            if (old != null) {
-                oldRoomId = old.getRoomId();
-            }
+            if (old != null) oldRoomId = old.getRoomId();
 
             ps.setInt(1, r.getGuestId());
             ps.setInt(2, r.getRoomId());
@@ -249,14 +274,15 @@ public class ReservationDAOImpl implements ReservationDAO {
             ps.setInt(13, r.getReservationId());
 
             boolean updated = ps.executeUpdate() > 0;
-            
+
+            // sync room status
             if (updated) {
                 updateRoomStatus(conn, r.getRoomId());
                 if (oldRoomId > 0 && oldRoomId != r.getRoomId()) {
                     updateRoomStatus(conn, oldRoomId);
                 }
             }
-            
+
             return updated;
 
         } catch (SQLException e) {
@@ -265,31 +291,59 @@ public class ReservationDAOImpl implements ReservationDAO {
     }
 
     @Override
+    public boolean updatePaymentStatus(int reservationId, double amountPaid, String paymentStatus) {
+
+        // update payment fields
+        String sql =
+            "UPDATE reservations " +
+            "SET amount_paid = ?, payment_status = ? " +
+            "WHERE reservation_id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDouble(1, amountPaid);
+            ps.setString(2, paymentStatus);
+            ps.setInt(3, reservationId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update payment status", e);
+        }
+    }
+
+    @Override
     public boolean delete(int reservationId) {
+
+        // delete booking
         String sql = "DELETE FROM reservations WHERE reservation_id=?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
+            // room id keep
             Reservation r = findById(reservationId);
             int roomId = (r != null) ? r.getRoomId() : 0;
 
             ps.setInt(1, reservationId);
+
             boolean deleted = ps.executeUpdate() > 0;
-            
-            if (deleted && roomId > 0) {
-                updateRoomStatus(conn, roomId);
-            }
-            
+
+            // sync room status
+            if (deleted && roomId > 0) updateRoomStatus(conn, roomId);
+
             return deleted;
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete reservation", e);
         }
     }
-    
+
     @Override
     public boolean hasBookingInRange(int roomId, Date checkIn, Date checkOut) {
+
+        // date range check
         String sql =
                 "SELECT COUNT(*) " +
                 "FROM reservations " +
@@ -316,36 +370,40 @@ public class ReservationDAOImpl implements ReservationDAO {
     }
 
     private void updateRoomStatus(Connection conn, int roomId) throws SQLException {
-        String checkSql = 
+
+        // room status logic
+        String checkSql =
             "SELECT COUNT(*) FROM reservations " +
             "WHERE room_id = ? " +
             "AND UPPER(status) IN ('PENDING','CONFIRMED','CHECKED_IN') " +
             "AND check_in_date <= CURDATE() " +
             "AND check_out_date > CURDATE()";
-        
+
         try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
             ps.setInt(1, roomId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 boolean hasActiveBooking = rs.getInt(1) > 0;
-                
+
+                // maintenance skip
                 String currentStatusSql = "SELECT status FROM rooms WHERE room_id = ?";
                 String currentStatus = "AVAILABLE";
+
                 try (PreparedStatement ps2 = conn.prepareStatement(currentStatusSql)) {
                     ps2.setInt(1, roomId);
+
                     try (ResultSet rs2 = ps2.executeQuery()) {
-                        if (rs2.next()) {
-                            currentStatus = rs2.getString(1);
-                        }
+                        if (rs2.next()) currentStatus = rs2.getString(1);
                     }
                 }
-                
-                if ("MAINTENANCE".equalsIgnoreCase(currentStatus)) {
-                    return;
-                }
-                
+
+                if ("MAINTENANCE".equalsIgnoreCase(currentStatus)) return;
+
+                // status update
                 String newStatus = hasActiveBooking ? "BOOKED" : "AVAILABLE";
                 String updateSql = "UPDATE rooms SET status = ? WHERE room_id = ?";
+
                 try (PreparedStatement ps3 = conn.prepareStatement(updateSql)) {
                     ps3.setString(1, newStatus);
                     ps3.setInt(2, roomId);
@@ -357,6 +415,8 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public String findLastReservationNumberForDate(String yyyymmddPrefix) {
+
+        // number generation
         String sql =
             "SELECT reservation_number " +
             "FROM reservations " +
@@ -380,9 +440,11 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public List<Reservation> findByRoom(int roomId) {
+
+        // filter by room
         String sql =
             "SELECT reservation_id, reservation_number, guest_id, room_id, check_in_date, check_out_date, status, notes, created_by, " +
-            "       nights, rate_per_night, subtotal, tax, discount, total_amount " +
+            "       nights, rate_per_night, subtotal, tax, discount, total_amount, amount_paid, payment_status " +
             "FROM reservations " +
             "WHERE room_id=? AND status IN ('CONFIRMED','CHECKED_IN') " +
             "ORDER BY check_in_date ASC";
@@ -397,6 +459,7 @@ public class ReservationDAOImpl implements ReservationDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(mapBasic(rs));
             }
+
             return list;
 
         } catch (SQLException e) {
@@ -406,9 +469,12 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public List<Reservation> findBetween(Date start, Date end) {
+
+        // date range list
         String sql =
             "SELECT r.reservation_id, r.reservation_number, r.guest_id, r.room_id, r.check_in_date, r.check_out_date, " +
             "       r.status, r.notes, r.created_by, r.nights, r.rate_per_night, r.subtotal, r.tax, r.discount, r.total_amount, " +
+            "       r.amount_paid, r.payment_status, " +
             "       g.full_name AS guest_name, g.email AS guest_email, g.contact_number AS guest_phone, " +
             "       rm.room_number AS room_number, rm.room_type AS room_type " +
             "FROM reservations r " +
@@ -429,6 +495,7 @@ public class ReservationDAOImpl implements ReservationDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
             }
+
             return list;
 
         } catch (SQLException e) {
@@ -437,7 +504,10 @@ public class ReservationDAOImpl implements ReservationDAO {
     }
 
     private Reservation mapBasic(ResultSet rs) throws SQLException {
+
+        // basic mapping
         Reservation r = new Reservation();
+
         r.setReservationId(rs.getInt("reservation_id"));
         r.setReservationNumber(rs.getString("reservation_number"));
         r.setGuestId(rs.getInt("guest_id"));
@@ -454,12 +524,17 @@ public class ReservationDAOImpl implements ReservationDAO {
         r.setTax(rs.getDouble("tax"));
         r.setDiscount(rs.getDouble("discount"));
         r.setTotalAmount(rs.getDouble("total_amount"));
+
+        // payment fields
+        r.setAmountPaid(rs.getDouble("amount_paid"));
+        r.setPaymentStatus(rs.getString("payment_status"));
+
         return r;
     }
 
-    
-    
     private Reservation map(ResultSet rs) throws SQLException {
+
+        // full mapping
         Reservation r = mapBasic(rs);
 
         r.setGuestName(rs.getString("guest_name"));
@@ -470,16 +545,19 @@ public class ReservationDAOImpl implements ReservationDAO {
 
         return r;
     }
-    
+
     @Override
     public List<Reservation> getRecentCheckins() {
+
+        // dashboard list
         String sql =
             "SELECT r.reservation_id, r.reservation_number, r.guest_id, r.room_id, " +
             "       r.check_in_date, r.check_out_date, r.status, r.notes, r.created_by, " +
             "       r.nights, r.rate_per_night, r.subtotal, r.tax, r.discount, r.total_amount, " +
+            "       r.amount_paid, r.payment_status, " +
             "       COALESCE(g.full_name, '') AS guest_name, " +
             "       COALESCE(g.email, '') AS guest_email, " +
-            "       COALESCE(g.contact_number, '') AS guest_phone, " +  
+            "       COALESCE(g.contact_number, '') AS guest_phone, " +
             "       COALESCE(rm.room_number, 'N/A') AS room_number, " +
             "       COALESCE(rm.room_type, 'Unknown') AS room_type " +
             "FROM reservations r " +
@@ -496,38 +574,41 @@ public class ReservationDAOImpl implements ReservationDAO {
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                list.add(map(rs));
-            }
+            while (rs.next()) list.add(map(rs));
             return list;
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to load recent check-ins", e);
         }
     }
-    
+
     @Override
     public List<Reservation> findByGuestId(int guestId) {
+
+        // guest history
         String sql =
                 "SELECT r.reservation_id, r.reservation_number, r.guest_id, r.room_id, " +
                 "r.check_in_date, r.check_out_date, r.status, r.notes, r.nights, " +
                 "r.rate_per_night, r.subtotal, r.tax, r.discount, r.total_amount, " +
+                "r.amount_paid, r.payment_status, r.created_by, " +
                 "rm.room_number, rm.room_type " +
                 "FROM reservations r " +
                 "JOIN rooms rm ON r.room_id = rm.room_id " +
                 "WHERE r.guest_id = ? " +
                 "ORDER BY r.reservation_id DESC";
 
-        List<Reservation> list = new java.util.ArrayList<>();
+        List<Reservation> list = new ArrayList<>();
 
-        try (java.sql.Connection con = com.oceanview.util.DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, guestId);
 
-            try (java.sql.ResultSet rs = ps.executeQuery()) {
+            // manual mapping
+            try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Reservation r = new Reservation();
+
                     r.setReservationId(rs.getInt("reservation_id"));
                     r.setReservationNumber(rs.getString("reservation_number"));
                     r.setGuestId(rs.getInt("guest_id"));
@@ -536,6 +617,7 @@ public class ReservationDAOImpl implements ReservationDAO {
                     r.setCheckOutDate(rs.getDate("check_out_date"));
                     r.setStatus(rs.getString("status"));
                     r.setNotes(rs.getString("notes"));
+                    r.setCreatedBy(rs.getInt("created_by"));
 
                     r.setNights(rs.getInt("nights"));
                     r.setRatePerNight(rs.getDouble("rate_per_night"));
@@ -543,6 +625,9 @@ public class ReservationDAOImpl implements ReservationDAO {
                     r.setTax(rs.getDouble("tax"));
                     r.setDiscount(rs.getDouble("discount"));
                     r.setTotalAmount(rs.getDouble("total_amount"));
+
+                    r.setAmountPaid(rs.getDouble("amount_paid"));
+                    r.setPaymentStatus(rs.getString("payment_status"));
 
                     r.setRoomNumber(rs.getString("room_number"));
                     r.setRoomType(rs.getString("room_type"));
@@ -560,6 +645,8 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public int countBetween(Date start, Date end) {
+
+        // count stats
         String sql =
                 "SELECT COUNT(*) " +
                 "FROM reservations " +
@@ -584,6 +671,8 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public double sumRevenueBetween(Date start, Date end) {
+
+        // revenue stats
         String sql =
                 "SELECT COALESCE(SUM(total_amount), 0) " +
                 "FROM reservations " +
@@ -607,9 +696,10 @@ public class ReservationDAOImpl implements ReservationDAO {
         return 0.0;
     }
 
-    
     @Override
     public int countAllReservations() {
+
+        // total count
         String sql = "SELECT COUNT(*) FROM reservations";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -625,6 +715,8 @@ public class ReservationDAOImpl implements ReservationDAO {
 
     @Override
     public int countOccupiedRoomsToday(Date today) {
+
+        // occupied rooms
         String sql =
                 "SELECT COUNT(DISTINCT room_id) " +
                 "FROM reservations " +
@@ -647,10 +739,10 @@ public class ReservationDAOImpl implements ReservationDAO {
         }
     }
 
-
-    
     @Override
     public List<ReservationDailyCount> countPerDayBetween(Date start, Date end) {
+
+        // chart data
         String sql =
                 "SELECT check_in_date AS day, COUNT(*) AS cnt " +
                 "FROM reservations " +

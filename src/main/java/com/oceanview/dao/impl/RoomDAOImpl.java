@@ -10,9 +10,15 @@ import java.util.List;
 
 public class RoomDAOImpl implements RoomDAO {
 
+    // dao implementation
+  
     @Override
     public List<Room> findAll() {
+
+        // read all
         List<Room> rooms = new ArrayList<>();
+
+        // sql query
         String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status, description, image_url " +
                      "FROM rooms ORDER BY room_number";
 
@@ -20,16 +26,20 @@ public class RoomDAOImpl implements RoomDAO {
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
+            // result mapping
             while (rs.next()) rooms.add(map(rs));
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to load rooms", e);
         }
+
         return rooms;
     }
 
     @Override
     public Room findById(int id) {
+
+        // search by id
         String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status, description, image_url " +
                      "FROM rooms WHERE room_id = ?";
 
@@ -49,6 +59,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public Room findByNumber(String roomNumber) {
+
+        // search by number
         String sql = "SELECT room_id, room_number, room_type, rate_per_night, max_guests, status, description, image_url " +
                      "FROM rooms WHERE room_number = ?";
 
@@ -68,6 +80,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public int create(Room room) {
+
+        // insert data
         String sql = "INSERT INTO rooms (room_number, room_type, rate_per_night, max_guests, status, description, image_url) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -84,6 +98,7 @@ public class RoomDAOImpl implements RoomDAO {
 
             ps.executeUpdate();
 
+            // generated id
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 return keys.next() ? keys.getInt(1) : 0;
             }
@@ -95,6 +110,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public boolean update(Room room) {
+
+        // update data
         String sql = "UPDATE rooms SET room_number=?, room_type=?, rate_per_night=?, max_guests=?, status=?, description=?, image_url=? " +
                      "WHERE room_id=?";
 
@@ -119,6 +136,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public boolean delete(int id) {
+
+        // delete record
         String sql = "DELETE FROM rooms WHERE room_id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -134,6 +153,8 @@ public class RoomDAOImpl implements RoomDAO {
 
     @Override
     public double findPriceById(int roomId) {
+
+        // price lookup
         String sql = "SELECT rate_per_night FROM rooms WHERE room_id=?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -149,9 +170,36 @@ public class RoomDAOImpl implements RoomDAO {
             throw new RuntimeException("Failed to load room price", e);
         }
     }
+    
+    
+    @Override
+    public boolean updateStatus(int roomId, String status) {
+
+        // update room status only
+        if (roomId <= 0) return false;
+        if (status == null || status.trim().isEmpty()) return false;
+
+        String sql = "UPDATE rooms SET status=? WHERE room_id=?";
+
+        try (Connection con = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, status.trim().toUpperCase());
+            ps.setInt(2, roomId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     private Room map(ResultSet rs) throws SQLException {
+
+        // result mapping
         Room room = new Room();
+
         room.setRoomId(rs.getInt("room_id"));
         room.setRoomNumber(rs.getString("room_number"));
         room.setRoomType(rs.getString("room_type"));
@@ -160,6 +208,7 @@ public class RoomDAOImpl implements RoomDAO {
         room.setStatus(rs.getString("status"));
         room.setDescription(rs.getString("description"));
         room.setImageUrl(rs.getString("image_url"));
+
         return room;
     }
 }

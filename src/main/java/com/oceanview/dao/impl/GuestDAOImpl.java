@@ -10,17 +10,24 @@ import java.util.List;
 
 public class GuestDAOImpl implements GuestDAO {
 
+    // dao implementation
+   
+
     @Override
     public List<Guest> findAll() {
+
+        // sql query
         String sql = "SELECT guest_id, user_id, full_name, address, contact_number, email, password " +
                 "FROM guests ORDER BY guest_id DESC";
 
         List<Guest> list = new ArrayList<>();
 
+        // database read
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
+            // result mapping
             while (rs.next()) list.add(map(rs));
             return list;
 
@@ -31,6 +38,8 @@ public class GuestDAOImpl implements GuestDAO {
 
     @Override
     public int getNextGuestId() {
+
+        // id generation
         String sql = "SELECT COALESCE(MAX(guest_id), 0) + 1 AS next_id FROM guests";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -41,12 +50,14 @@ public class GuestDAOImpl implements GuestDAO {
             return rs.getInt("next_id");
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to generate next guest id: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to generate next guest id", e);
         }
     }
 
     @Override
     public Guest findById(int id) {
+
+        // search by id
         String sql = "SELECT guest_id, user_id, full_name, address, contact_number, email, password " +
                 "FROM guests WHERE guest_id=?";
 
@@ -54,6 +65,7 @@ public class GuestDAOImpl implements GuestDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
+
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
             }
@@ -65,6 +77,8 @@ public class GuestDAOImpl implements GuestDAO {
 
     @Override
     public Guest findByEmail(String email) {
+
+        // search by email
         String sql = "SELECT guest_id, user_id, full_name, address, contact_number, email, password " +
                 "FROM guests WHERE email=?";
 
@@ -72,6 +86,7 @@ public class GuestDAOImpl implements GuestDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, email);
+
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
             }
@@ -83,6 +98,8 @@ public class GuestDAOImpl implements GuestDAO {
 
     @Override
     public Guest findByContactNumber(String contactNumber) {
+
+        // search by contact
         String sql = "SELECT guest_id, user_id, full_name, address, contact_number, email, password " +
                 "FROM guests WHERE contact_number=?";
 
@@ -90,17 +107,20 @@ public class GuestDAOImpl implements GuestDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, contactNumber);
+
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find guest by contact number", e);
+            throw new RuntimeException("Failed to find guest by contact", e);
         }
     }
 
     @Override
     public Guest findByEmailAndPassword(String email, String password) {
+
+        // login check
         String sql = "SELECT guest_id, user_id, full_name, address, contact_number, email, password " +
                 "FROM guests WHERE email=? AND password=? LIMIT 1";
 
@@ -121,6 +141,8 @@ public class GuestDAOImpl implements GuestDAO {
 
     @Override
     public List<Guest> search(String q, int limit) {
+
+        // search query
         String sql =
                 "SELECT guest_id, user_id, full_name, address, contact_number, email, password " +
                         "FROM guests " +
@@ -152,6 +174,8 @@ public class GuestDAOImpl implements GuestDAO {
 
     @Override
     public int create(Guest g) {
+
+        // insert data
         String sql = "INSERT INTO guests (guest_id, user_id, full_name, address, contact_number, email, password) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -166,27 +190,32 @@ public class GuestDAOImpl implements GuestDAO {
 
             ps.setString(3, g.getFullName());
 
-            if (g.getAddress() == null || g.getAddress().trim().isEmpty()) ps.setNull(4, Types.VARCHAR);
+            if (g.getAddress() == null || g.getAddress().trim().isEmpty())
+                ps.setNull(4, Types.VARCHAR);
             else ps.setString(4, g.getAddress().trim());
 
             ps.setString(5, g.getContactNumber());
 
-            if (g.getEmail() == null || g.getEmail().trim().isEmpty()) ps.setNull(6, Types.VARCHAR);
+            if (g.getEmail() == null || g.getEmail().trim().isEmpty())
+                ps.setNull(6, Types.VARCHAR);
             else ps.setString(6, g.getEmail().trim());
 
-            if (g.getPassword() == null || g.getPassword().trim().isEmpty()) ps.setNull(7, Types.VARCHAR);
+            if (g.getPassword() == null || g.getPassword().trim().isEmpty())
+                ps.setNull(7, Types.VARCHAR);
             else ps.setString(7, g.getPassword().trim());
 
             ps.executeUpdate();
             return id;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to create guest: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to create guest", e);
         }
     }
 
     @Override
     public boolean update(Guest g) {
+
+        // update data
         String sql = "UPDATE guests SET user_id=?, full_name=?, address=?, contact_number=?, email=? " +
                 "WHERE guest_id=?";
 
@@ -211,7 +240,10 @@ public class GuestDAOImpl implements GuestDAO {
 
     @Override
     public boolean updatePasswordById(int guestId, String password) {
+
+        // password update
         String sql = "UPDATE guests SET password=? WHERE guest_id=?";
+
         try (Connection con = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -223,10 +255,13 @@ public class GuestDAOImpl implements GuestDAO {
             throw new RuntimeException("Failed to update guest password", e);
         }
     }
-    
+
     @Override
     public boolean updatePassword(int guestId, String password) {
+
+        // password update
         String sql = "UPDATE guests SET password = ? WHERE guest_id = ?";
+
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -240,9 +275,10 @@ public class GuestDAOImpl implements GuestDAO {
         }
     }
 
-
     @Override
     public boolean delete(int id) {
+
+        // delete record
         String sql = "DELETE FROM guests WHERE guest_id=?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -257,7 +293,10 @@ public class GuestDAOImpl implements GuestDAO {
     }
 
     private Guest map(ResultSet rs) throws SQLException {
+
+        // result mapping
         Guest g = new Guest();
+
         g.setGuestId(rs.getInt("guest_id"));
 
         int uid = rs.getInt("user_id");
@@ -267,7 +306,8 @@ public class GuestDAOImpl implements GuestDAO {
         g.setAddress(rs.getString("address"));
         g.setContactNumber(rs.getString("contact_number"));
         g.setEmail(rs.getString("email"));
-        g.setPassword(rs.getString("password")); 
+        g.setPassword(rs.getString("password"));
+
         return g;
     }
 }

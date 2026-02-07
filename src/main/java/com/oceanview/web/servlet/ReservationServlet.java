@@ -1,3 +1,4 @@
+// ReservationServlet.java
 package com.oceanview.web.servlet;
 
 import com.oceanview.model.Reservation;
@@ -14,6 +15,7 @@ import java.util.List;
 public class ReservationServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+
     private ReservationService service;
 
     @Override
@@ -65,9 +67,8 @@ public class ReservationServlet extends HttpServlet {
         }
 
         String path = req.getPathInfo();
-        
         if (path == null) path = "";
-        
+
         if ("/stats".equals(path)) {
             int days = 30;
             try {
@@ -83,7 +84,6 @@ public class ReservationServlet extends HttpServlet {
             sendJson(resp, 200, json);
             return;
         }
-
 
         if ("/by-room".equals(path)) {
             String roomIdStr = req.getParameter("roomId");
@@ -140,7 +140,9 @@ public class ReservationServlet extends HttpServlet {
                         .append("\"roomNumber\":\"").append(esc(r.getRoomNumber())).append("\",")
                         .append("\"checkInDate\":\"").append(r.getCheckInDate()).append("\",")
                         .append("\"checkOutDate\":\"").append(r.getCheckOutDate()).append("\",")
-                        .append("\"status\":\"").append(esc(r.getStatus())).append("\"")
+                        .append("\"status\":\"").append(esc(r.getStatus())).append("\",")
+                        .append("\"amountPaid\":").append(r.getAmountPaid()).append(",")
+                        .append("\"paymentStatus\":\"").append(esc(r.getPaymentStatus())).append("\"")
                         .append("}")
                         .append("}");
 
@@ -152,14 +154,20 @@ public class ReservationServlet extends HttpServlet {
         }
 
         if ("/detail".equals(path)) {
-            int id = Integer.parseInt(req.getParameter("id"));
+            String idStr = req.getParameter("id");
+            if (idStr == null || idStr.trim().isEmpty()) {
+                sendJson(resp, 400, "{\"success\":false,\"message\":\"id required\"}");
+                return;
+            }
+
+            int id = Integer.parseInt(idStr);
             Reservation r = service.getById(id);
             if (r == null) {
                 sendJson(resp, 404, "{\"success\":false,\"message\":\"Reservation not found\"}");
                 return;
             }
 
-            sendJson(resp, 200,
+            String json =
                     "{\"success\":true,\"reservation\":{" +
                             "\"reservationId\":" + r.getReservationId() + "," +
                             "\"reservationNumber\":\"" + esc(r.getReservationNumber()) + "\"," +
@@ -179,9 +187,12 @@ public class ReservationServlet extends HttpServlet {
                             "\"subtotal\":" + r.getSubtotal() + "," +
                             "\"discount\":" + r.getDiscount() + "," +
                             "\"tax\":" + r.getTax() + "," +
-                            "\"totalAmount\":" + r.getTotalAmount() +
-                            "}}"
-            );
+                            "\"totalAmount\":" + r.getTotalAmount() + "," +
+                            "\"amountPaid\":" + r.getAmountPaid() + "," +
+                            "\"paymentStatus\":\"" + esc(r.getPaymentStatus()) + "\"" +
+                            "}}";
+
+            sendJson(resp, 200, json);
             return;
         }
 
@@ -207,9 +218,11 @@ public class ReservationServlet extends HttpServlet {
         }
 
         List<Reservation> list = service.listReservations();
+
         StringBuilder sb = new StringBuilder("{\"success\":true,\"reservations\":[");
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);
+
             sb.append("{")
                     .append("\"reservationId\":").append(r.getReservationId()).append(",")
                     .append("\"reservationNumber\":\"").append(esc(r.getReservationNumber())).append("\",")
@@ -223,11 +236,15 @@ public class ReservationServlet extends HttpServlet {
                     .append("\"guestName\":\"").append(esc(r.getGuestName())).append("\",")
                     .append("\"guestEmail\":\"").append(esc(r.getGuestEmail())).append("\",")
                     .append("\"guestContactNumber\":\"").append(esc(r.getGuestContactNumber())).append("\",")
-                    .append("\"roomNumber\":\"").append(esc(r.getRoomNumber())).append("\"")
+                    .append("\"roomNumber\":\"").append(esc(r.getRoomNumber())).append("\",")
+                    .append("\"amountPaid\":").append(r.getAmountPaid()).append(",")
+                    .append("\"paymentStatus\":\"").append(esc(r.getPaymentStatus())).append("\"")
                     .append("}");
+
             if (i < list.size() - 1) sb.append(",");
         }
         sb.append("]}");
+
         sendJson(resp, 200, sb.toString());
     }
 
@@ -328,10 +345,12 @@ public class ReservationServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
         if (!isStaffOrAdmin(req)) {
             sendJson(resp, 403, "{\"success\":false,\"message\":\"Staff/Admin access required\"}");
             return;
         }
+
         User user = sessionUser(req);
         if (user == null) {
             sendJson(resp, 401, "{\"success\":false,\"message\":\"Session expired. Please login again.\"}");

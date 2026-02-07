@@ -1,6 +1,10 @@
 package com.oceanview.model;
 
 public class Room {
+
+    // model class
+    // room data
+
     private int roomId;
     private String roomNumber;
     private String roomType;
@@ -9,9 +13,11 @@ public class Room {
     private int maxGuests;
     private String description;
     private String imageUrl;
-   
+
+    // default constructor
     public Room() {}
-    
+
+    // parameter constructor
     public Room(String roomNumber, String roomType, double ratePerNight, String status, int maxGuests) {
         this.roomNumber = roomNumber;
         this.roomType = roomType;
@@ -19,9 +25,8 @@ public class Room {
         this.status = status;
         this.maxGuests = maxGuests;
     }
-    
 
-
+    // getter setter
     public int getRoomId() { return roomId; }
     public void setRoomId(int roomId) { this.roomId = roomId; }
 
@@ -36,29 +41,23 @@ public class Room {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    
-    public int getMaxGuests() {return maxGuests;}
-    public void setMaxGuests(int maxGuests) {this.maxGuests = maxGuests;}
-    
-    public String getDescription() {
-        return description;
-    }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public int getMaxGuests() { return maxGuests; }
+    public void setMaxGuests(int maxGuests) { this.maxGuests = maxGuests; }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     @Override
     public String toString() {
-        return String.format("Room{id=%d, number='%s', type='%s', price=%.2f, status='%s'}", 
-                           roomId, roomNumber, roomType, ratePerNight, status);
+
+        // debug output
+        return String.format(
+            "Room{id=%d, number='%s', type='%s', price=%.2f, status='%s'}",
+            roomId, roomNumber, roomType, ratePerNight, status
+        );
     }
 }

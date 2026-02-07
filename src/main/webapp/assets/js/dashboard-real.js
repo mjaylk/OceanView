@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Basic date label
   const todayLabel = document.getElementById("todayLabel");
   if (todayLabel) {
     todayLabel.textContent = new Date().toLocaleDateString("en-US", {
@@ -9,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Sidebar
   window.toggleSidebar = () => {
     const sb = document.querySelector(".sidebar");
     if (sb) sb.classList.toggle("open");
@@ -17,7 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadDashboard();
 });
-
 
 const BASE = (() => {
   const parts = window.location.pathname.split("/").filter(Boolean);
@@ -61,20 +58,53 @@ async function loadRoomsStats() {
   const note = document.getElementById("statRoomNote");
 
   try {
-    const res = await fetch(`${BASE}/api/rooms`, { credentials: "include" });
-    if (!res.ok) throw new Error("Rooms request failed: " + res.status);
+    const [roomsRes, resvRes] = await Promise.all([
+      fetch(`${BASE}/api/rooms`, { credentials: "include" }),
+      fetch(`${BASE}/api/reservations`, { credentials: "include" })
+    ]);
 
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message || "Rooms load failed");
+    if (!roomsRes.ok) throw new Error("Rooms request failed: " + roomsRes.status);
+    if (!resvRes.ok) throw new Error("Reservations request failed: " + resvRes.status);
 
-    const rooms = data.rooms || [];
+    const roomsData = await roomsRes.json();
+    const resvData = await resvRes.json();
+
+    if (!roomsData.success) throw new Error(roomsData.message || "Rooms load failed");
+    if (!resvData.success) throw new Error(resvData.message || "Reservations load failed");
+
+    const rooms = roomsData.rooms || [];
+    const reservations = resvData.reservations || [];
+
     const total = rooms.length;
 
-    const occupied = rooms.filter(r => String(r.status).toUpperCase() === "OCCUPIED").length;
-    el.textContent = `${occupied}/${total}`;
-    note.textContent = `${Math.max(total - occupied, 0)} available`;
+    const today = toDateOnly(new Date());
 
-    renderOccChart(occupied, Math.max(total - occupied, 0));
+    const activeStatuses = new Set(["CONFIRMED", "BOOKED", "CHECKED_IN", "CHECKIN", "CHECK-IN"]);
+
+    const occupiedRoomIds = new Set();
+
+    for (const r of reservations) {
+      const status = String(r.status || "").toUpperCase().trim();
+      if (!activeStatuses.has(status)) continue;
+
+      const ci = parseISODateOnly(r.checkInDate);
+      const co = parseISODateOnly(r.checkOutDate);
+
+      if (!ci || !co) continue;
+
+      if (isDateInRange(today, ci, co)) {
+        const roomId = r.roomId != null ? String(r.roomId) : "";
+        if (roomId) occupiedRoomIds.add(roomId);
+      }
+    }
+
+    const occupied = occupiedRoomIds.size;
+    const available = Math.max(total - occupied, 0);
+
+    el.textContent = `${occupied}/${total}`;
+    note.textContent = `${available} available`;
+
+    renderOccChart(occupied, available);
   } catch (e) {
     el.textContent = "-/ -";
     note.textContent = "Cannot load";
@@ -123,7 +153,6 @@ async function loadRecentReservations() {
   if (!tbody) return;
 
   try {
-   
     const res = await fetch(`${BASE}/api/reservations?limit=8`, { credentials: "include" });
     if (!res.ok) throw new Error("Recent reservations request failed: " + res.status);
 
@@ -220,7 +249,7 @@ function renderStatusBadge(status) {
   const s = String(status || "").toUpperCase();
   let cls = "bg-secondary";
 
-  if (s.includes("CONFIRM")) cls = "bg-success";
+  if (s.includes("CONFIRM") || s.includes("BOOK")) cls = "bg-success";
   else if (s.includes("PEND")) cls = "bg-warning text-dark";
   else if (s.includes("CHECK")) cls = "bg-info";
   else if (s.includes("CANCEL")) cls = "bg-danger";
@@ -247,4 +276,26 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function parseISODateOnly(iso) {
+  if (!iso) return null;
+  const parts = String(iso).split("-");
+  if (parts.length !== 3) return null;
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const d = Number(parts[2]);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
+function toDateOnly(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+
+function isDateInRange(today, checkIn, checkOut) {
+  const t = toDateOnly(today).getTime();
+  const ci = toDateOnly(checkIn).getTime();
+  const co = toDateOnly(checkOut).getTime();
+  return t >= ci && t < co;
 }

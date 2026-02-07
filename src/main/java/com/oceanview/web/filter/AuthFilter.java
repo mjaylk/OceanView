@@ -11,6 +11,7 @@ import java.io.IOException;
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
+    // check path start
     private boolean startsWith(String path, String... prefixes) {
         for (String p : prefixes) {
             if (path.startsWith(p)) return true;
@@ -18,10 +19,12 @@ public class AuthFilter implements Filter {
         return false;
     }
 
+    // admin check
     private boolean isAdmin(User u) {
         return u != null && "ADMIN".equalsIgnoreCase(u.getRole());
     }
 
+    // staff or admin check
     private boolean isStaffOrAdmin(User u) {
         if (u == null) return false;
         String r = u.getRole();
@@ -39,7 +42,7 @@ public class AuthFilter implements Filter {
         String uri = req.getRequestURI();
         String path = uri.substring(ctx.length());
 
-  
+        // public pages
         if (
                 path.equals("/login.html") ||
                 path.equals("/guest-login.html") ||
@@ -60,6 +63,7 @@ public class AuthFilter implements Filter {
         User staffUser = null;
         Guest guestUser = null;
 
+        // session read
         if (session != null) {
             Object u = session.getAttribute("user");
             if (u instanceof User) staffUser = (User) u;
@@ -68,10 +72,7 @@ public class AuthFilter implements Filter {
             if (g instanceof Guest) guestUser = (Guest) g;
         }
 
-        /* 
-           Guest pages should be protected by "guest" session.
-           If guest not logged in, redirect to guest-login.html (not login.html).
-        */
+        // guest pages
         if (
                 path.equals("/guest-reservations.html") ||
                 path.startsWith("/api/guest/reservations")
@@ -84,11 +85,7 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        /*
-           Admin-only pages.
-           If staff tries, send them to dashboard.
-           If not logged in, send to login.html.
-        */
+        // admin only pages
         if (
                 path.equals("/users.html") ||
                 path.startsWith("/api/users")
@@ -105,9 +102,7 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        /*
-           Staff + Admin pages.
-        */
+        // staff and admin pages
         if (
                 path.equals("/dashboard.html") ||
                 path.equals("/reservation.html") ||
@@ -126,11 +121,7 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        /*
-           Default rule:
-           If it is not in any allowed list, require staff/admin login.
-           This prevents random pages from being opened without authentication.
-        */
+        // default rule
         if (staffUser == null) {
             resp.sendRedirect(ctx + "/login.html");
             return;
@@ -139,6 +130,9 @@ public class AuthFilter implements Filter {
         chain.doFilter(request, response);
     }
 
-    @Override public void init(FilterConfig filterConfig) {}
-    @Override public void destroy() {}
+    @Override
+    public void init(FilterConfig filterConfig) {}
+
+    @Override
+    public void destroy() {}
 }

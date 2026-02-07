@@ -16,6 +16,7 @@ public class RoomServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
+    // service objects
     private RoomService roomService;
     private ReservationService reservationService;
 
@@ -25,6 +26,7 @@ public class RoomServlet extends HttpServlet {
         reservationService = new ReservationService();
     }
 
+    // get user from session
     private User sessionUser(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
         if (session == null) return null;
@@ -32,12 +34,14 @@ public class RoomServlet extends HttpServlet {
         return (user instanceof User) ? (User) user : null;
     }
 
+    // admin check
     private boolean isAdmin(HttpServletRequest req) {
         User u = sessionUser(req);
         if (u == null) return false;
         return "ADMIN".equalsIgnoreCase(u.getRole());
     }
 
+    // staff or admin check
     private boolean isStaffOrAdmin(HttpServletRequest req) {
         User u = sessionUser(req);
         if (u == null) return false;
@@ -45,17 +49,20 @@ public class RoomServlet extends HttpServlet {
         return "ADMIN".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role);
     }
 
+    // send json response
     private void sendJson(HttpServletResponse resp, int status, String json) throws IOException {
         resp.setStatus(status);
         resp.setContentType("application/json;charset=UTF-8");
         resp.getWriter().write(json);
     }
 
+    // deny access
     private void denyAccess(HttpServletResponse resp, String message) throws IOException {
         sendJson(resp, HttpServletResponse.SC_FORBIDDEN,
                 "{\"success\":false,\"message\":\"" + esc(message) + "\"}");
     }
 
+    // escape text
     private String esc(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")
@@ -70,14 +77,16 @@ public class RoomServlet extends HttpServlet {
         String path = req.getPathInfo();
         if (path == null) path = "";
 
-        // Availability is used by reservations, so STAFF/ADMIN should access it
-        // GET /api/rooms/availability?checkIn=2026-02-10&checkOut=2026-02-12
+        // room availability
         if ("/availability".equals(path)) {
+
+            // access check
             if (!isStaffOrAdmin(req)) {
                 denyAccess(resp, "Staff/Admin access required");
                 return;
             }
 
+            // read dates
             String checkInStr = req.getParameter("checkIn");
             String checkOutStr = req.getParameter("checkOut");
 
@@ -100,13 +109,13 @@ public class RoomServlet extends HttpServlet {
             }
         }
 
-        // Everything else in rooms page is admin-only
+        // admin access for room management
         if (!isAdmin(req)) {
             denyAccess(resp, "Admin access required");
             return;
         }
 
-        // Optional: /api/rooms/detail?id=1
+        // room detail
         if ("/detail".equals(path)) {
             String idStr = req.getParameter("id");
             if (idStr == null || idStr.trim().isEmpty()) {
@@ -142,7 +151,7 @@ public class RoomServlet extends HttpServlet {
             }
         }
 
-        // Default: list all rooms (admin)
+        // list rooms
         try {
             List<Room> rooms = roomService.listRooms();
             StringBuilder sb = new StringBuilder("{\"success\":true,\"rooms\":[");
@@ -173,6 +182,8 @@ public class RoomServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // admin access
         if (!isAdmin(req)) {
             denyAccess(resp, "Admin access required");
             return;
@@ -204,6 +215,8 @@ public class RoomServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // admin access
         if (!isAdmin(req)) {
             denyAccess(resp, "Admin access required");
             return;
@@ -245,6 +258,8 @@ public class RoomServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // admin access
         if (!isAdmin(req)) {
             denyAccess(resp, "Admin access required");
             return;
@@ -266,11 +281,13 @@ public class RoomServlet extends HttpServlet {
         }
     }
 
+    // read request body
     private String getBody(HttpServletRequest req) throws IOException {
         java.util.Scanner s = new java.util.Scanner(req.getInputStream()).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }
 
+    // extract value from json string
     private String extract(String json, String key, String defaultVal) {
         if (json == null) return defaultVal;
 

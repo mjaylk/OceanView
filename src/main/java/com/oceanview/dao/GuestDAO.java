@@ -4,23 +4,27 @@ import com.oceanview.model.Guest;
 import java.util.List;
 
 public interface GuestDAO {
-    List<Guest> findAll();
-    Guest findById(int id);
-    Guest findByEmail(String email);
+
+    // dao layer
+    // abstraction
+
+    List<Guest> findAll();               // read all
+    Guest findById(int id);             // read by id
+    
+    // validation support
+    Guest findByEmail(String email);   
     Guest findByContactNumber(String contactNumber);
-  
-  
 
+    List<Guest> search(String q, int limit); // search 
 
-    List<Guest> search(String q, int limit);
+    int getNextGuestId();               // id generation
+    int create(Guest guest);            // create
+    boolean update(Guest guest);        // update
+    boolean delete(int id);             // delete
 
-    int getNextGuestId();
-    int create(Guest guest);
-    boolean update(Guest guest);
-    boolean delete(int id);
-    boolean updatePassword(int guestId, String password);
-    boolean updatePasswordById(int guestId, String password);
+    // security
+    boolean updatePassword(int guestId, String password);       
+    boolean updatePasswordById(int guestId, String password);   
 
-  
-    Guest findByEmailAndPassword(String email, String password);
+    Guest findByEmailAndPassword(String email, String password); // login
 }

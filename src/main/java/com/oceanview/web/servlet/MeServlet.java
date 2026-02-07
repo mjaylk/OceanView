@@ -11,12 +11,14 @@ public class MeServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
+    // send json response
     private void sendJson(HttpServletResponse resp, int status, String json) throws IOException {
         resp.setStatus(status);
         resp.setContentType("application/json;charset=UTF-8");
         resp.getWriter().write(json);
     }
 
+    // escape text
     private String esc(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")
@@ -27,18 +29,22 @@ public class MeServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // get session
         HttpSession session = req.getSession(false);
         if (session == null) {
             sendJson(resp, 401, "{\"success\":false,\"message\":\"No session\"}");
             return;
         }
 
+        // get user
         User user = (User) session.getAttribute("user");
         if (user == null) {
             sendJson(resp, 401, "{\"success\":false,\"message\":\"Not logged in\"}");
             return;
         }
 
+        // send user info
         sendJson(resp, 200,
                 "{\"success\":true," +
                         "\"username\":\"" + esc(user.getUsername()) + "\"," +

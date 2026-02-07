@@ -3,44 +3,44 @@ package com.oceanview.dao;
 import com.oceanview.model.Reservation;
 import com.oceanview.model.ReservationDailyCount;
 
-
 import java.sql.Date;
 import java.util.List;
 
 public interface ReservationDAO {
-    List<Reservation> findAll();
-    Reservation findById(int id);
-    Reservation findByNumber(String reservationNumber);
-    int countAllReservations();
-    boolean hasBookingInRange(int roomId, Date checkIn, Date checkOut);
 
-    int countOccupiedRoomsToday(Date today);
+  
+    // abstraction
 
+    List<Reservation> findAll();                    // read all
+    Reservation findById(int id);                  // read by id
+    Reservation findByNumber(String reservationNumber); // business key
 
-    boolean hasOverlappingReservation(int roomId, Date checkIn, Date checkOut);
+    int countAllReservations();                    // reporting
+    boolean hasBookingInRange(int roomId, Date checkIn, Date checkOut); // validation
 
-   
-    boolean hasOverlappingReservationExceptSelf(int roomId, int reservationId, Date checkIn, Date checkOut);
+    int countOccupiedRoomsToday(Date today);       // dashboard stats
 
-    String findLastReservationNumberForDate(String yyyymmddPrefix);
+    boolean hasOverlappingReservation(int roomId, Date checkIn, Date checkOut); // conflict check
+    boolean hasOverlappingReservationExceptSelf(
+            int roomId, int reservationId, Date checkIn, Date checkOut); // update validation
 
-    int create(Reservation reservation);
-    boolean updateStatus(int reservationId, String status);
-    boolean delete(int reservationId);
+    String findLastReservationNumberForDate(String yyyymmddPrefix); // number generation
 
-    boolean update(Reservation r);
+    int create(Reservation reservation);            // create
+    boolean updateStatus(int reservationId, String status); // status change
+    boolean delete(int reservationId);              // delete
+    boolean update(Reservation r);                  // update
 
-    List<Reservation> findByRoom(int roomId);
-    List<Reservation> findBetween(Date start, Date end);
-    List<Reservation> getRecentCheckins();
-    List<Reservation> findByGuestId(int guestId);
-    
-    int countBetween(Date start, Date end);
+    List<Reservation> findByRoom(int roomId);       // filter by room
+    List<Reservation> findBetween(Date start, Date end); // date range
+    List<Reservation> getRecentCheckins();          // dashboard
+    List<Reservation> findByGuestId(int guestId);   // guest history
 
-    double sumRevenueBetween(Date start, Date end);
+    int countBetween(Date start, Date end);         // analytics
+    double sumRevenueBetween(Date start, Date end); // revenue
 
-    List<ReservationDailyCount> countPerDayBetween(Date start, Date end);
-
-
-
+    List<ReservationDailyCount> countPerDayBetween(
+            Date start, Date end);                  // chart data
+ // payment support methods
+    boolean updatePaymentStatus(int reservationId, double amountPaid, String paymentStatus);
 }

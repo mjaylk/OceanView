@@ -13,14 +13,18 @@ import java.util.List;
 public class GuestReservationsServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+
+    // service object
     private final ReservationService reservationService = new ReservationService();
 
+    // send json response
     private void sendJson(HttpServletResponse resp, int status, String json) throws IOException {
         resp.setStatus(status);
         resp.setContentType("application/json;charset=UTF-8");
         resp.getWriter().write(json);
     }
 
+    // escape text
     private String esc(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")
@@ -32,16 +36,21 @@ public class GuestReservationsServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
+        // get session
         HttpSession session = req.getSession(false);
         Guest guest = (session != null) ? (Guest) session.getAttribute("guest") : null;
 
+        // check login
         if (guest == null) {
             sendJson(resp, 401, "{\"success\":false,\"message\":\"Guest login required\"}");
             return;
         }
 
-        List<Reservation> list = reservationService.listReservationsByGuest(guest.getGuestId());
+        // get reservations
+        List<Reservation> list =
+                reservationService.listReservationsByGuest(guest.getGuestId());
 
+        // build json
         StringBuilder sb = new StringBuilder("{\"success\":true,\"reservations\":[");
         for (int i = 0; i < list.size(); i++) {
             Reservation r = list.get(i);

@@ -9,7 +9,6 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
-
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
@@ -17,8 +16,11 @@ import java.text.DecimalFormat;
 
 @WebServlet("/api/invoice")
 public class InvoiceServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
-	private ReservationService service;
+
+    // service object
+    private ReservationService service;
 
     @Override
     public void init() {
@@ -27,8 +29,28 @@ public class InvoiceServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        int id = Integer.parseInt(req.getParameter("reservationId"));
-        Reservation r = service.getById(id); 
+
+        // read id
+        String idStr = req.getParameter("reservationId");
+        if (idStr == null || idStr.trim().isEmpty()) {
+            resp.setStatus(400);
+            resp.setContentType("application/json;charset=UTF-8");
+            resp.getWriter().write("{\"success\":false,\"message\":\"reservationId required\"}");
+            return;
+        }
+
+        int id;
+        try {
+            id = Integer.parseInt(idStr.trim());
+        } catch (Exception e) {
+            resp.setStatus(400);
+            resp.setContentType("application/json;charset=UTF-8");
+            resp.getWriter().write("{\"success\":false,\"message\":\"Invalid reservationId\"}");
+            return;
+        }
+
+        // get reservation
+        Reservation r = service.getById(id);
         if (r == null) {
             resp.setStatus(404);
             resp.setContentType("application/json;charset=UTF-8");
@@ -36,74 +58,78 @@ public class InvoiceServlet extends HttpServlet {
             return;
         }
 
+        // pdf response
         resp.setContentType("application/pdf");
-        resp.setHeader("Content-Disposition", "inline; filename=\"INV-" + r.getReservationNumber() + ".pdf\"");
+        resp.setHeader("Content-Disposition", "inline; filename=\"INV-" + safe(r.getReservationNumber()) + ".pdf\"");
 
         DecimalFormat df = new DecimalFormat("0.00");
 
+        // create pdf
         try (PDDocument doc = new PDDocument()) {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+
                 float x = 50;
                 float y = 780;
                 float lh = 16;
 
+                // title
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 18);
-
                 cs.newLineAtOffset(x, y);
                 cs.showText("OceanView Resort - Invoice");
                 cs.endText();
 
                 y -= 2 * lh;
 
+                // invoice number
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11);
-
                 cs.newLineAtOffset(x, y);
-                cs.showText("Invoice No: INV-" + r.getReservationNumber());
+                cs.showText("Invoice No: INV-" + safe(r.getReservationNumber()));
                 cs.endText();
 
                 y -= lh;
 
+                // guest info
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11);
-
                 cs.newLineAtOffset(x, y);
                 cs.showText("Guest: " + safe(r.getGuestName()) + " | " + safe(r.getGuestEmail()) + " | " + safe(r.getGuestContactNumber()));
                 cs.endText();
 
                 y -= lh;
 
+                // room info
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11);
-
                 cs.newLineAtOffset(x, y);
                 cs.showText("Room: " + safe(r.getRoomNumber()) + " (" + safe(r.getRoomType()) + ")");
                 cs.endText();
 
                 y -= lh;
 
+                // dates
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11);
-
                 cs.newLineAtOffset(x, y);
                 cs.showText("Dates: " + r.getCheckInDate() + "  ->  " + r.getCheckOutDate() + " | Nights: " + r.getNights());
                 cs.endText();
 
                 y -= 2 * lh;
 
+                // pricing title
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
-
                 cs.newLineAtOffset(x, y);
                 cs.showText("Pricing");
                 cs.endText();
 
                 y -= lh;
 
+                // rate
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
                 cs.newLineAtOffset(x, y);
@@ -112,6 +138,7 @@ public class InvoiceServlet extends HttpServlet {
 
                 y -= lh;
 
+                // subtotal
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11);
                 cs.newLineAtOffset(x, y);
@@ -120,6 +147,7 @@ public class InvoiceServlet extends HttpServlet {
 
                 y -= lh;
 
+                // tax and discount
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11);
                 cs.newLineAtOffset(x, y);
@@ -128,6 +156,7 @@ public class InvoiceServlet extends HttpServlet {
 
                 y -= lh;
 
+                // total
                 cs.beginText();
                 cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
                 cs.newLineAtOffset(x, y);
@@ -139,5 +168,8 @@ public class InvoiceServlet extends HttpServlet {
         }
     }
 
-    private String safe(String s) { return s == null ? "-" : s; }
+    // null safe text
+    private String safe(String s) {
+        return s == null ? "-" : s;
+    }
 }

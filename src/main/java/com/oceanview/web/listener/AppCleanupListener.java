@@ -12,20 +12,23 @@ import java.util.Enumeration;
 @WebListener
 public class AppCleanupListener implements ServletContextListener {
 
+    // app start
     @Override
     public void contextInitialized(ServletContextEvent sce) {
        
     }
 
+    // app stop
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-   
+
+        // stop mysql cleanup thread
         try {
             AbandonedConnectionCleanupThread.checkedShutdown();
         } catch (Throwable ignored) {
         }
 
-     
+        // deregister jdbc drivers
         try {
             Enumeration<Driver> drivers = DriverManager.getDrivers();
             while (drivers.hasMoreElements()) {

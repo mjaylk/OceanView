@@ -1,3 +1,8 @@
+<!-- sidebar.html -->
+<button class="toggle-btn" type="button" onclick="toggleSidebar()">
+  <i class="fas fa-bars fs-5"></i>
+</button>
+
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="logo-section">
@@ -7,6 +12,9 @@
         <p class="sidebar-subtitle mb-0">Admin Panel</p>
       </div>
     </div>
+    <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar">
+      <i class="fas fa-times"></i>
+    </button>
   </div>
 
   <div class="nav-section">
@@ -31,12 +39,12 @@
         <a class="nav-link" href="users.html"><i class="fas fa-users-gear"></i><span>Users</span></a>
       </li>
 
-      <li class="nav-item" data-role="ADMIN,STAFF">
-        <a class="nav-link" href="help.html"><i class="fas fa-question"></i><span>Help</span></a>
-      </li>
-
       <li class="nav-item" data-role="ADMIN">
         <a class="nav-link" href="settings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
+      </li>
+
+      <li class="nav-item" data-role="ADMIN,STAFF">
+        <a class="nav-link" href="help.html"><i class="fas fa-question"></i><span>Help</span></a>
       </li>
     </ul>
   </div>
@@ -45,3 +53,48 @@
     <i class="fas fa-sign-out-alt"></i><span>Logout</span>
   </a>
 </nav>
+
+<button class="help-fab" type="button" onclick="openHelpPanel()" aria-label="Help">
+  <i class="fas fa-circle-question"></i>
+</button>
+
+<div class="help-panel" id="helpPanel">
+  <div class="help-panel-header">
+    <div class="help-panel-title">
+      <i class="fas fa-circle-question me-2"></i>Help
+    </div>
+    <button class="help-panel-close" type="button" onclick="closeHelpPanel()" aria-label="Close">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <div class="help-panel-body">
+    <div class="small text-muted mb-2">Quick links</div>
+
+    <div class="d-grid gap-2 mb-3">
+      <a class="btn btn-sm btn-outline-primary" href="help.html">
+        <i class="fas fa-book-open me-1"></i>Open Help Page
+      </a>
+      <a class="btn btn-sm btn-outline-success" href="reservation.html">
+        <i class="fas fa-calendar-plus me-1"></i>Create Reservation
+      </a>
+      <a class="btn btn-sm btn-outline-info" href="guest.html">
+        <i class="fas fa-users me-1"></i>Guests
+      </a>
+    </div>
+
+    <hr class="my-3">
+
+    <div class="small text-muted mb-2">Support contact</div>
+
+    <div class="small">
+      <div class="text-muted">Email</div>
+      <div id="sbSupportEmail">-</div>
+    </div>
+
+    <div class="small mt-2">
+      <div class="text-muted">Phone</div>
+      <div id="sbSupportPhone">-</div>
+    </div>
+  </div>
+</div>

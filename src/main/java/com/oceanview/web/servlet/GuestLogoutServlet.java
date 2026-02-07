@@ -11,8 +11,14 @@ public class GuestLogoutServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // get session
         HttpSession s = req.getSession(false);
+
+        // invalidate session
         if (s != null) s.invalidate();
+
+        // redirect to login
         resp.sendRedirect(req.getContextPath() + "/guest-login.html");
     }
 }

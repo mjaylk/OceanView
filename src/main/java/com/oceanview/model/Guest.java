@@ -1,16 +1,22 @@
 package com.oceanview.model;
 
 public class Guest {
+
+    // model class
+    // data holder
+
     private int guestId;
     private Integer userId;        
     private String fullName;
     private String address;
-    private String contactNumber;  
+    private String contactNumber;
     private String email;
     private String password;
 
+    // default constructor
     public Guest() {}
 
+    // getter setter
     public int getGuestId() { return guestId; }
     public void setGuestId(int guestId) { this.guestId = guestId; }
 
@@ -29,8 +35,7 @@ public class Guest {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
+    // sensitive data
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-    
-    
 }

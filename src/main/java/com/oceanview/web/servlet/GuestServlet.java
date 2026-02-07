@@ -11,7 +11,10 @@ import java.util.List;
 
 @WebServlet("/api/guests/*")
 public class GuestServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
+
+    // service object
     private GuestService service;
 
     @Override
@@ -19,6 +22,7 @@ public class GuestServlet extends HttpServlet {
         service = new GuestService();
     }
 
+    // staff or admin check
     private boolean isStaffOrAdmin(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
         if (session == null) return false;
@@ -28,12 +32,14 @@ public class GuestServlet extends HttpServlet {
         return "ADMIN".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role);
     }
 
+    // send json response
     private void sendJson(HttpServletResponse resp, int status, String json) throws IOException {
         resp.setStatus(status);
         resp.setContentType("application/json;charset=UTF-8");
         resp.getWriter().write(json);
     }
 
+    // escape text
     private String esc(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")
@@ -44,6 +50,8 @@ public class GuestServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // access check
         if (!isStaffOrAdmin(req)) {
             sendJson(resp, 403, "{\"success\":false,\"message\":\"Staff/Admin access required\"}");
             return;
@@ -51,7 +59,7 @@ public class GuestServlet extends HttpServlet {
 
         String path = req.getPathInfo();
 
-        // DETAIL: /api/guests/detail?id=1
+        // get guest by id
         if ("/detail".equals(path)) {
             String idStr = req.getParameter("id");
 
@@ -75,7 +83,7 @@ public class GuestServlet extends HttpServlet {
             }
         }
 
-        // SEARCH: /api/guests/search?q=xx
+        // search guests
         if ("/search".equals(path)) {
             String q = req.getParameter("q");
             List<Guest> guests = service.searchGuests(q);
@@ -98,7 +106,7 @@ public class GuestServlet extends HttpServlet {
             return;
         }
 
-       
+        // get guest by email or phone
         String email = req.getParameter("email");
         String phone = req.getParameter("phone");
 
@@ -122,7 +130,7 @@ public class GuestServlet extends HttpServlet {
             return;
         }
 
-        // LIST: /api/guests  (THIS PART WAS MISSING "address")
+        // list guests
         List<Guest> list = service.listGuests();
         StringBuilder sb = new StringBuilder("{\"success\":true,\"guests\":[");
         for (int i = 0; i < list.size(); i++) {
@@ -140,6 +148,7 @@ public class GuestServlet extends HttpServlet {
         sendJson(resp, 200, sb.toString());
     }
 
+    // send one guest object
     private void sendGuestObject(HttpServletResponse resp, Guest g) throws IOException {
         sendJson(resp, 200,
                 "{\"success\":true,\"guest\":{" +
@@ -154,6 +163,8 @@ public class GuestServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // access check
         if (!isStaffOrAdmin(req)) {
             sendJson(resp, 403, "{\"success\":false,\"message\":\"Staff/Admin access required\"}");
             return;
@@ -180,6 +191,8 @@ public class GuestServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // access check
         if (!isStaffOrAdmin(req)) {
             sendJson(resp, 403, "{\"success\":false,\"message\":\"Staff/Admin access required\"}");
             return;
@@ -217,6 +230,8 @@ public class GuestServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        // access check
         if (!isStaffOrAdmin(req)) {
             sendJson(resp, 403, "{\"success\":false,\"message\":\"Staff/Admin access required\"}");
             return;
@@ -246,11 +261,13 @@ public class GuestServlet extends HttpServlet {
         }
     }
 
+    // read request body
     private String getBody(HttpServletRequest req) throws IOException {
         java.util.Scanner s = new java.util.Scanner(req.getInputStream()).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }
 
+    // extract value from json string
     private String extract(String json, String key, String defaultVal) {
         if (json == null) return defaultVal;
 
