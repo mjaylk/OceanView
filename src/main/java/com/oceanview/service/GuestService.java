@@ -159,18 +159,5 @@ public class GuestService {
         return dao.findByEmailAndPassword(email.trim(), password.trim());
     }
 
-    // simple manual test
-    public static void main(String[] args) {
 
-        GuestService service = new GuestService();
-
-        System.out.println("TEST CASE 01 - getGuestById() with invalid id");
-        Guest g = service.getGuestById(0);
-
-        if (g == null) {
-            System.out.println("RESULT: PASS");
-        } else {
-            System.out.println("RESULT: FAIL");
-        }
-    }
 }

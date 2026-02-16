@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OceanView - Room Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="assets/css/oceanview-dashboard.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.css">
+  <style>
+    #roomCalendar .fc-daygrid-event { cursor: pointer; }
+    #roomCalendar .fc .fc-toolbar-title { font-size: 1.1rem; }
+    .room-thumb { width: 44px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e5e5; }
+  </style>
+</head>
+<body>
+
+
+
+<div id="sidebarMount"></div>
+
+<div class="main-content">
+  <header class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+      <i class="fas fa-building me-2 text-primary"></i>Room Management
+    </h1>
+    <div class="d-flex align-items-center">
+      <span class="badge bg-success me-2">Online</span>
+      <span class="me-3 fw-medium" id="todayLabel"></span>
+      <i class="fas fa-bell fs-5 text-muted"></i>
+    </div>
+  </header>
+
+  <!-- Room Form Card -->
+  <div class="card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="mb-0 fw-semibold" id="formTitle">Add New Room</h5>
+    </div>
+
+    <div id="roomAlertContainer" style="display:none;" class="mb-3">
+      <div class="alert alert-dismissible fade show" role="alert" id="roomAlert">
+        <i class="fas fa-info-circle me-2"></i>
+        <span id="roomAlertMsg"></span>
+        <button type="button" class="btn-close" onclick="hideAlert('room')"></button>
+      </div>
+    </div>
+
+    <form id="roomForm" class="row g-3">
+      <input type="hidden" id="roomId">
+
+      <div class="col-md-3">
+        <label class="form-label fw-medium">Room Number</label>
+        <input type="text" class="form-control" id="roomNumber" placeholder="101" required>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-medium">Type</label>
+        <select class="form-select" id="roomType" required>
+          <option value="STANDARD">Standard</option>
+          <option value="DELUXE">Deluxe</option>
+          <option value="SUITE">Ocean Suite</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-medium">Price/Night</label>
+        <input type="number" class="form-control" id="price" min="50" step="0.01" required>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-medium">Max Guests</label>
+        <input type="number" class="form-control" id="maxGuests" min="1" max="10" value="2">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-medium">Status</label>
+        <select class="form-select" id="status" required>
+          <option value="AVAILABLE">Available</option>
+          <option value="BOOKED">Booked</option>
+          <option value="MAINTENANCE">Maintenance</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-medium">Description</label>
+        <textarea class="form-control" id="description" rows="2" placeholder="Room features, view, amenities..."></textarea>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-medium">Room Image URL</label>
+        <input class="form-control" id="imageUrl" placeholder="https://example.com/room.jpg">
+        <div class="form-text">Paste a public image URL. (Later we can add file upload.)</div>
+      </div>
+
+      <div class="col-12 d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+          <i class="fas fa-plus me-1"></i>New Room
+        </button>
+        <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveRoom()">
+          <i class="fas fa-save me-1"></i><span id="saveBtnText">Save Room</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Rooms Table Card -->
+  <div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="mb-0 fw-semibold">All Rooms</h5>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadRooms()">
+          <i class="fas fa-rotate me-1"></i>Refresh
+        </button>
+      </div>
+    </div>
+
+    <div id="pageAlertContainer" style="display:none;" class="mb-3">
+      <div class="alert alert-dismissible fade show" role="alert" id="pageAlert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span id="pageAlertMsg"></span>
+        <button type="button" class="btn-close" onclick="hideAlert('page')"></button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="roomsTable">
+        <thead class="table-dark">
+          <tr>
+            <th style="width:80px;">ID</th>
+            <th>Room #</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Guests</th>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Image</th>
+            <th class="text-end" style="width:160px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="9" class="text-center py-4 text-muted">Loading rooms...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ROOM BOOKED CALENDAR -->
+  <div class="card p-4 mt-4 border-0 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0 fw-semibold">Room Booked Calendar</h5>
+      <div class="d-flex gap-2 align-items-center">
+        <select class="form-select form-select-sm" id="calendarRoomId" style="min-width:220px;">
+          <option value="">Select a room...</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="refreshRoomCalendar()">
+          <i class="fas fa-rotate me-1"></i>Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="text-muted small mb-2" id="roomCalendarHint">Select a room to view bookings.</div>
+    <div id="roomCalendar"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js"></script>
+<script src="assets/js/oceanview-dashboard.js"></script>
+
+<script>
+  const BASE = "/OceanViewResortBooking";
+  const tbody = document.querySelector("#roomsTable tbody");
+
+  let isEditing = false;
+  let roomsCache = [];
+  let roomCalendar = null;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("todayLabel").textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    loadRooms();
+    resetForm();
+    initRoomCalendarIfNeeded();
+  });
+
+  function showAlert(type, msg, level = 'danger') {
+    const container = document.getElementById(type + 'AlertContainer');
+    const alert = document.getElementById(type + 'Alert');
+    const msgSpan = document.getElementById(type + 'AlertMsg');
+
+    container.style.display = 'block';
+    alert.className = `alert alert-${level} alert-dismissible fade show`;
+    msgSpan.textContent = msg;
+
+    if (level === 'success') setTimeout(() => hideAlert(type), 3000);
+  }
+
+  function hideAlert(type) {
+    document.getElementById(type + 'AlertContainer').style.display = 'none';
+  }
+
+  function updateFormMode(editing) {
+    isEditing = editing;
+    const title = document.getElementById("formTitle");
+    const btnText = document.getElementById("saveBtnText");
+    const btn = document.getElementById("saveBtn");
+
+    if (editing) {
+      title.textContent = "Edit Room";
+      btnText.textContent = "Update Room";
+      btn.className = "btn btn-warning text-dark";
+    } else {
+      title.textContent = "Add New Room";
+      btnText.textContent = "Save Room";
+      btn.className = "btn btn-primary";
+    }
+  }
+
+  function resetForm() {
+    document.getElementById("roomId").value = "";
+    document.getElementById("roomForm").reset();
+    document.getElementById("maxGuests").value = "2";
+    document.getElementById("status").value = "AVAILABLE";
+    hideAlert('room');
+    updateFormMode(false);
+  }
+
+  async function loadRooms() {
+    hideAlert('page');
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <span class="ms-2">Loading rooms...</span>
+      </td></tr>`;
+
+    try {
+      const res = await fetch(`${BASE}/api/rooms`, { credentials: "same-origin" });
+      const txt = await res.text();
+
+      if (!res.ok) {
+        let msg = "Cannot load rooms";
+        try { msg = JSON.parse(txt).message || msg; } catch(e) {}
+        showAlert('page', msg, 'danger');
+        tbody.innerHTML = `<tr><td colspan="9" class="text-danger text-center py-4">Failed to load data</td></tr>`;
+        return;
+      }
+
+      const data = JSON.parse(txt);
+      const rooms = data.rooms || [];
+      roomsCache = rooms;
+
+      populateCalendarRooms(rooms);
+
+      if (!rooms.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-muted text-center py-4">No rooms found. <strong>Add your first room above!</strong></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rooms.map(r => {
+        const img = (r.imageUrl || "").trim();
+        const imgCell = img
+          ? `<a href="${escapeHtml(img)}" target="_blank" rel="noopener">
+               <img class="room-thumb" src="${escapeHtml(img)}" alt="Room image">
+             </a>`
+          : `<span class="text-muted">-</span>`;
+
+        return `
+        <tr>
+          <td class="fw-semibold">${r.roomId}</td>
+          <td><strong class="text-primary">${escapeHtml(r.roomNumber)}</strong></td>
+          <td><span class="badge bg-${r.roomType === 'SUITE' ? 'primary' : r.roomType === 'DELUXE' ? 'info' : 'secondary'} px-3 py-2">${escapeHtml(r.roomType)}</span></td>
+          <td><strong class="text-success">$${Number(r.price || 0).toFixed(2)}</strong></td>
+          <td><span class="badge bg-light text-dark border px-2">${r.maxGuests || 2}</span></td>
+          <td><span class="badge ${r.status === 'AVAILABLE' ? 'bg-success' : r.status === 'OCCUPIED' ? 'bg-warning' : 'bg-danger'} px-3 py-2">${escapeHtml(r.status)}</span></td>
+          <td class="text-truncate" style="max-width: 150px;" title="${escapeHtml(r.description || '')}">${escapeHtml(r.description || '-')}</td>
+          <td>${imgCell}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary me-1" onclick='editRoom(${JSON.stringify(r)})' title="Edit">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteRoom(${r.roomId})" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>`;
+      }).join("");
+
+      refreshRoomCalendar();
+
+    } catch (err) {
+      showAlert('page', "Network error: " + err.message, 'danger');
+    }
+  }
+
+  async function saveRoom() {
+    const roomNumber = document.getElementById("roomNumber").value.trim();
+    if (!roomNumber) {
+      showAlert('room', 'Room number is required!', 'warning');
+      return;
+    }
+
+    const roomIdVal = document.getElementById("roomId").value;
+
+    const formData = {
+      roomId: roomIdVal || null,
+      roomNumber,
+      roomType: document.getElementById("roomType").value,
+      price: parseFloat(document.getElementById("price").value),
+      maxGuests: parseInt(document.getElementById("maxGuests").value),
+      status: document.getElementById("status").value,
+      description: document.getElementById("description").value.trim(),
+      imageUrl: document.getElementById("imageUrl").value.trim()
+    };
+
+    const method = roomIdVal ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(`${BASE}/api/rooms`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(formData)
+      });
+
+      const resultText = await response.text();
+      let result = {};
+      try { result = JSON.parse(resultText); } catch (e) {}
+
+      if (response.ok && result.success !== false) {
+        loadRooms();
+        resetForm();
+        showAlert('room', roomIdVal ? 'Room updated successfully!' : 'Room added successfully!', 'success');
+      } else {
+        showAlert('room', (result.message || 'Save failed'), 'danger');
+        console.log("Save error response:", resultText);
+      }
+    } catch (err) {
+      showAlert('room', 'Network error: ' + err.message, 'danger');
+    }
+  }
+
+  function editRoom(room) {
+    document.getElementById("roomId").value = room.roomId;
+    document.getElementById("roomNumber").value = room.roomNumber;
+    document.getElementById("roomType").value = room.roomType;
+    document.getElementById("price").value = room.price;
+    document.getElementById("maxGuests").value = room.maxGuests || 2;
+    document.getElementById("status").value = room.status;
+    document.getElementById("description").value = room.description || '';
+    document.getElementById("imageUrl").value = room.imageUrl || '';
+
+    hideAlert('room');
+    updateFormMode(true);
+    document.getElementById("roomForm").scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function deleteRoom(id) {
+    if (!confirm(`Delete room ID ${id}? This cannot be undone.`)) return;
+
+    try {
+      const response = await fetch(`${BASE}/api/rooms?id=${id}`, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      });
+
+      if (response.ok) {
+        loadRooms();
+        showAlert('page', 'Room deleted successfully!', 'success');
+      } else {
+        showAlert('page', 'Delete failed', 'danger');
+      }
+    } catch (err) {
+      showAlert('page', "Delete error: " + err.message, 'danger');
+    }
+  }
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('active');
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  }
+
+  function populateCalendarRooms(rooms) {
+    const sel = document.getElementById("calendarRoomId");
+    if (!sel) return;
+
+    const current = sel.value;
+    sel.innerHTML = `<option value="">Select a room...</option>`;
+    rooms.forEach(r => sel.add(new Option(`${r.roomNumber} - ${r.roomType}`, r.roomId)));
+    if (current) sel.value = current;
+  }
+
+  function initRoomCalendarIfNeeded() {
+    if (roomCalendar) return;
+
+    const el = document.getElementById("roomCalendar");
+    if (!el) return;
+
+    roomCalendar = new FullCalendar.Calendar(el, {
+      initialView: "dayGridMonth",
+      height: "auto",
+
+      events: async (info, success, failure) => {
+        const roomId = document.getElementById("calendarRoomId").value;
+        if (!roomId) { success([]); return; }
+
+        try {
+          const start = info.startStr.slice(0, 10);
+          const end = info.endStr.slice(0, 10);
+
+          const url =
+            `${BASE}/api/reservations/calendar?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&roomId=${encodeURIComponent(roomId)}`;
+
+          const res = await fetch(url, { credentials: "same-origin" });
+          const txt = await res.text();
+          let data = {};
+          try { data = JSON.parse(txt); } catch(e) {}
+
+          if (!res.ok) { failure(data); return; }
+
+          const events = (data.events || []).map(e => ({
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            end: e.end,
+            extendedProps: e.extendedProps || {}
+          }));
+
+          success(events);
+        } catch (e) {
+          failure(e);
+        }
+      },
+
+      eventClick: () => {
+        window.open("reservation.html", "_blank");
+      }
+    });
+
+    roomCalendar.render();
+
+    document.getElementById("calendarRoomId").addEventListener("change", () => {
+      const roomId = document.getElementById("calendarRoomId").value;
+      document.getElementById("roomCalendarHint").textContent =
+        roomId ? "Hover a booking to see details." : "Select a room to view bookings.";
+      refreshRoomCalendar();
+    });
+  }
+
+  function refreshRoomCalendar() {
+    if (!roomCalendar) return;
+    roomCalendar.refetchEvents();
+  }
+</script>
+
+<script src="assets/js/layout.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ package com.oceanview.web.servlet;
 import com.oceanview.model.Reservation;
 import com.oceanview.model.User;
 import com.oceanview.service.ReservationService;
+import com.oceanview.util.Flash;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
@@ -286,9 +287,14 @@ public class ReservationServlet extends HttpServlet {
                     user.getUserId()
             );
 
+            // flash success message
+            Flash.success(req, "Reservation created successfully!");
+
             sendJson(resp, 201, "{\"success\":true,\"reservationId\":" + id + "}");
 
         } catch (Exception e) {
+            // flash error message
+            Flash.error(req, "Failed to create reservation: " + e.getMessage());
             sendJson(resp, 400, "{\"success\":false,\"message\":\"" + esc(e.getMessage()) + "\"}");
         }
     }
@@ -332,13 +338,19 @@ public class ReservationServlet extends HttpServlet {
             );
 
             if (!ok) {
+                Flash.error(req, "Failed to update reservation.");
                 sendJson(resp, 400, "{\"success\":false,\"message\":\"Update failed\"}");
                 return;
             }
 
+            // flash success message
+            Flash.success(req, "Reservation updated successfully!");
+
             sendJson(resp, 200, "{\"success\":true}");
 
         } catch (Exception e) {
+            // flash error message
+            Flash.error(req, "Failed to update reservation: " + e.getMessage());
             sendJson(resp, 400, "{\"success\":false,\"message\":\"" + esc(e.getMessage()) + "\"}");
         }
     }
@@ -359,13 +371,26 @@ public class ReservationServlet extends HttpServlet {
 
         try {
             int id = Integer.parseInt(req.getParameter("id"));
+
             boolean ok = service.deleteReservation(id);
             if (!ok) {
+                Flash.error(req, "Reservation not found.");
                 sendJson(resp, 404, "{\"success\":false,\"message\":\"Reservation not found\"}");
                 return;
             }
+
+            // flash success message
+            Flash.success(req, "Reservation deleted successfully!");
+
             sendJson(resp, 200, "{\"success\":true}");
+
+        } catch (IllegalArgumentException e) {
+            // flash error message
+            Flash.error(req, e.getMessage());
+            sendJson(resp, 400, "{\"success\":false,\"message\":\"" + esc(e.getMessage()) + "\"}");
         } catch (Exception e) {
+            // flash error message
+            Flash.error(req, "Failed to delete reservation: " + e.getMessage());
             sendJson(resp, 400, "{\"success\":false,\"message\":\"" + esc(e.getMessage()) + "\"}");
         }
     }

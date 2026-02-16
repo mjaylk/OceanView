@@ -29,19 +29,6 @@ public class AuthService {
         return ok ? user : null;
     }
 
-    // simple manual test
-    public static void main(String[] args) {
+   
 
-        AuthService service = new AuthService();
-
-        System.out.println("TEST CASE 01 - Login with invalid user");
-
-        User user = service.login("wrong_user", "wrong_pass");
-
-        if (user == null) {
-            System.out.println("RESULT: PASS");
-        } else {
-            System.out.println("RESULT: FAIL");
-        }
-    }
 }

@@ -42,6 +42,28 @@ public class ReservationPaymentDAOImpl implements ReservationPaymentDAO {
     }
 
     @Override
+    public int countByReservation(int reservationId) {
+
+        // count payments by reservation
+        String sql = "SELECT COUNT(*) FROM reservation_payments WHERE reservation_id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, reservationId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+
+            return 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to count payments", e);
+        }
+    }
+
+    @Override
     public List<ReservationPayment> findByReservation(int reservationId) {
 
         String sql =

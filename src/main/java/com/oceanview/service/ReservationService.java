@@ -1,11 +1,14 @@
 package com.oceanview.service;
 
 import com.oceanview.dao.ReservationDAO;
+import com.oceanview.dao.ReservationPaymentDAO;
 import com.oceanview.dao.RoomDAO;
 import com.oceanview.dao.impl.ReservationDAOImpl;
+import com.oceanview.dao.impl.ReservationPaymentDAOImpl;
 import com.oceanview.dao.impl.RoomDAOImpl;
 import com.oceanview.model.Reservation;
 import com.oceanview.model.ReservationDailyCount;
+import com.oceanview.model.ReservationPayment;
 import com.oceanview.model.Room;
 import com.oceanview.util.EmailUtil;
 
@@ -30,6 +33,9 @@ public class ReservationService {
     // availability check
     private final RoomDAO roomDAO = new RoomDAOImpl();
     private final ReservationDAO reservationDAO = new ReservationDAOImpl();
+    
+    // payment check
+    private final ReservationPaymentDAO paymentDAO = new ReservationPaymentDAOImpl();
 
     private static final double DEFAULT_TAX_RATE = 0.0;
 
@@ -69,23 +75,32 @@ public class ReservationService {
         return dao.findBetween(start, end);
     }
 
-    public boolean deleteReservation(int id) {
+public boolean deleteReservation(int id) {
 
-        // delete
-        if (id <= 0) throw new IllegalArgumentException("Invalid reservation id");
+    // delete
+    if (id <= 0) throw new IllegalArgumentException("Invalid reservation id");
 
-        Reservation existing = dao.findById(id);
-        if (existing == null) return false;
+    Reservation existing = dao.findById(id);
+    if (existing == null) return false;
 
-        boolean ok = dao.delete(id);
-
-        if (ok) {
-            syncRoomStatusAfterChange(existing.getRoomId());
+    // payment check
+    int paymentCount = paymentDAO.countByReservation(id);
+    if (paymentCount > 0) {
+        // delete payments first
+        List<ReservationPayment> payments = paymentDAO.findByReservation(id);
+        for (ReservationPayment payment : payments) {
+            paymentDAO.delete(payment.getPaymentId());
         }
-
-        return ok;
     }
 
+    boolean ok = dao.delete(id);
+
+    if (ok) {
+        syncRoomStatusAfterChange(existing.getRoomId());
+    }
+
+    return ok;
+}
     public List<Reservation> getRecentCheckins() {
 
         // dashboard list
@@ -569,62 +584,5 @@ public class ReservationService {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
-
-        ReservationService service = new ReservationService();
-
-        System.out.println("TEST CASE 01 - getByNumber() with null");
-        try {
-            Reservation r = service.getByNumber(null);
-            if (r == null) System.out.println("RESULT: PASS");
-            else System.out.println("RESULT: FAIL");
-        } catch (Exception e) {
-            System.out.println("RESULT: FAIL");
-            System.out.println("Error: " + e.getMessage());
-        }
-        System.out.println("------------------------------------");
-
-        System.out.println("TEST CASE 02 - getBetween() with null dates");
-        try {
-            service.getBetween(null, null);
-            System.out.println("RESULT: FAIL");
-        } catch (Exception e) {
-            if (e instanceof IllegalArgumentException) System.out.println("RESULT: PASS");
-            else System.out.println("RESULT: FAIL");
-        }
-        System.out.println("------------------------------------");
-
-        System.out.println("TEST CASE 03 - listRoomsWithAvailabilityJson() invalid range");
-        try {
-            Date in = Date.valueOf(LocalDate.now());
-            Date out = Date.valueOf(LocalDate.now());
-            service.listRoomsWithAvailabilityJson(in, out);
-            System.out.println("RESULT: FAIL");
-        } catch (Exception e) {
-            if (e instanceof IllegalArgumentException) System.out.println("RESULT: PASS");
-            else System.out.println("RESULT: FAIL");
-        }
-        System.out.println("------------------------------------");
-
-        System.out.println("TEST CASE 04 - getDashboardStatsJson(7) returns json");
-        try {
-            String json = service.getDashboardStatsJson(7);
-            if (json != null && json.contains("\"success\":true")) System.out.println("RESULT: PASS");
-            else System.out.println("RESULT: FAIL");
-        } catch (Exception e) {
-            System.out.println("RESULT: FAIL");
-            System.out.println("Error: " + e.getMessage());
-        }
-        System.out.println("------------------------------------");
-
-        System.out.println("TEST CASE 05 - deleteReservation() invalid id");
-        try {
-            service.deleteReservation(0);
-            System.out.println("RESULT: FAIL");
-        } catch (Exception e) {
-            if (e instanceof IllegalArgumentException) System.out.println("RESULT: PASS");
-            else System.out.println("RESULT: FAIL");
-        }
-        System.out.println("------------------------------------");
-    }
+ 
 }

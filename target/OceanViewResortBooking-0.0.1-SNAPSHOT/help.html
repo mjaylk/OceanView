@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OceanView | Help</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="assets/css/oceanview-dashboard.css" rel="stylesheet">
+
+  <style>
+    .help-search .form-control { border-radius: 999px; }
+    .help-search .btn { border-radius: 999px; }
+    .help-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .25rem .6rem;
+      border-radius: 999px;
+      font-size: .85rem;
+      background: rgba(13,110,253,.08);
+      color: #0d6efd;
+      border: 1px solid rgba(13,110,253,.18);
+      cursor: pointer;
+      user-select: none;
+    }
+    .help-tag:hover { background: rgba(13,110,253,.12); }
+    .help-muted { color: rgba(33,37,41,.75); }
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: .85rem;
+      padding: .15rem .35rem;
+      border: 1px solid rgba(0,0,0,.15);
+      border-radius: .35rem;
+      background: rgba(0,0,0,.03);
+    }
+    .faq-item { border-bottom: 1px solid rgba(0,0,0,.06); padding: .75rem 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { cursor: pointer; display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
+    .faq-q h6 { margin: 0; font-weight: 600; }
+    .faq-a { display: none; margin-top: .5rem; color: rgba(33,37,41,.8); }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-chevron { transition: transform .15s ease; }
+    .toast-container { z-index: 1080; }
+    .copy-btn { border-radius: .65rem; }
+  </style>
+</head>
+<body>
+
+<button class="toggle-sidebar" onclick="toggleSidebar()">
+  <i class="fas fa-bars fs-5"></i>
+</button>
+
+<div id="sidebarMount"></div>
+
+<div class="main-content">
+
+  <!-- Header -->
+  <header class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1">
+        <i class="fas fa-circle-question me-2 text-primary"></i>Help & Support
+      </h1>
+      <div class="help-muted small">
+        Quick guides, FAQs, and contact support
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+      <span class="badge bg-success">Online</span>
+      <span class="small text-muted" id="todayLabel"></span>
+
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnRefreshHelp">
+        <i class="fas fa-rotate-right me-1"></i>Refresh
+      </button>
+
+      <button type="button" class="btn btn-sm btn-outline-danger" id="btnLogout">
+        <i class="fas fa-right-from-bracket me-1"></i>Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- Search + Quick Actions -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="help-search d-flex gap-2">
+            <input id="helpSearch" type="text" class="form-control" placeholder="Search help topics... (example: reservation overlap, guest login, invoice)" />
+            <button id="helpSearchBtn" class="btn btn-primary">
+              <i class="fas fa-magnifying-glass me-1"></i>
+            </button>
+            <button id="helpClearBtn" class="btn btn-outline-secondary">
+              Clear
+            </button>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <span class="help-tag" data-tag="reservations"><i class="fas fa-calendar-check"></i> Reservations</span>
+            <span class="help-tag" data-tag="rooms"><i class="fas fa-bed"></i> Rooms</span>
+            <span class="help-tag" data-tag="guests"><i class="fas fa-users"></i> Guests</span>
+            <span class="help-tag" data-tag="users"><i class="fas fa-user-shield"></i> Users</span>
+            <span class="help-tag" data-tag="invoice"><i class="fas fa-file-invoice"></i> Invoice</span>
+            <span class="help-tag" data-tag="settings"><i class="fas fa-gear"></i> Settings</span>
+            <span class="help-tag" data-tag="login"><i class="fas fa-right-to-bracket"></i> Login</span>
+          </div>
+
+          <div class="mt-3 small help-muted">
+            Tip: Use <span class="kbd">Ctrl</span> + <span class="kbd">K</span> to focus search.
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Help Content -->
+  <div class="row g-4" id="helpCards">
+
+    <!-- Getting Started -->
+    <div class="col-md-6 help-card" data-tags="getting started login users">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-play-circle me-2 text-primary"></i>Getting Started</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li>Login using your staff or admin account.</li>
+            <li>Use the sidebar to navigate between sections.</li>
+            <li>Dashboard shows live statistics and recent activity.</li>
+            <li>Always logout after finishing your work.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reservations Help -->
+    <div class="col-md-6 help-card" data-tags="reservations reservation overlap calendar">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-calendar-check me-2 text-success"></i>Reservations</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li>Create new reservations with check-in and check-out dates.</li>
+            <li>System prevents overlapping reservations automatically.</li>
+            <li>Status types: <strong>PENDING, CONFIRMED, CANCELLED, CHECKED_OUT</strong>.</li>
+            <li>Edit reservations anytime if dates do not conflict.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guests Help -->
+    <div class="col-md-6 help-card" data-tags="guests guest login email phone">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-users me-2 text-info"></i>Guests</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li>Guests can be created when reservations are made.</li>
+            <li>Email and contact number should be correct for login.</li>
+            <li>Guest login details may be emailed automatically.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rooms Help -->
+    <div class="col-md-6 help-card" data-tags="rooms availability maintenance price">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-bed me-2 text-warning"></i>Rooms</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li>Only admins can manage rooms.</li>
+            <li>Room prices are used automatically in reservations.</li>
+            <li>Availability endpoint is used during reservation flow.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users & Roles -->
+    <div class="col-md-6 help-card" data-tags="users roles admin staff">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-user-shield me-2 text-danger"></i>Users & Roles</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li><strong>ADMIN</strong>: Full system access.</li>
+            <li><strong>STAFF</strong>: Reservations and guests only.</li>
+            <li>Pages are protected using filters and session roles.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="col-md-6 help-card" data-tags="settings email smtp">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-gear me-2 text-secondary"></i>Settings</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li>Only admins can update settings.</li>
+            <li>Email settings are saved under EMAIL category.</li>
+            <li>Use correct SMTP host and port values.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoice -->
+    <div class="col-md-6 help-card" data-tags="invoice pdf receipt">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-file-invoice me-2 text-primary"></i>Invoice</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li>Invoice is generated as a PDF using reservation details.</li>
+            <li>Use reservationId to open invoice.</li>
+            <li>Example: <span class="kbd">/api/invoice?reservationId=1</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support -->
+    <div class="col-md-6 help-card" data-tags="support contact">
+      <div class="card h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0"><i class="fas fa-life-ring me-2 text-secondary"></i>Support</h5>
+          <button type="button" class="btn btn-sm btn-outline-primary copy-btn" id="copySupport">
+            <i class="fas fa-copy me-1"></i>Copy
+          </button>
+        </div>
+        <div class="card-body">
+          <p class="mb-2">If you face any system issues:</p>
+          <ul class="mb-3">
+            <li>Refresh the page and try again.</li>
+            <li>Check your internet connection.</li>
+            <li>Contact the system administrator.</li>
+          </ul>
+
+          <p class="mb-0" id="supportText">
+            <strong>Email:</strong> vimukthijayarathna31@gmail.com<br>
+            <strong>Phone:</strong> +94 78 132 1071
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FAQ + System Status -->
+  <div class="row g-4 mt-1">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-circle-info me-2 text-info"></i>FAQ</h5>
+        </div>
+        <div class="card-body" id="faqList">
+
+          <div class="faq-item" data-tags="reservation overlap">
+            <div class="faq-q">
+              <h6>Why does it say “Selected dates overlap”?</h6>
+              <i class="fas fa-chevron-down faq-chevron text-muted"></i>
+            </div>
+            <div class="faq-a">
+              This happens when the same room has another reservation between your selected check-in and check-out dates.
+              Try a different room or change dates.
+            </div>
+          </div>
+
+          <div class="faq-item" data-tags="guest login">
+            <div class="faq-q">
+              <h6>Guest cannot login. What should I check?</h6>
+              <i class="fas fa-chevron-down faq-chevron text-muted"></i>
+            </div>
+            <div class="faq-a">
+              Check the guest email and password. If you created the reservation, a temporary password may be set.
+              Also check if email field is saved correctly.
+            </div>
+          </div>
+
+          <div class="faq-item" data-tags="rooms availability">
+            <div class="faq-q">
+              <h6>Why room shows AVAILABLE when it is reserved?</h6>
+              <i class="fas fa-chevron-down faq-chevron text-muted"></i>
+            </div>
+            <div class="faq-a">
+              Availability depends on the date range you send to the availability endpoint.
+              Make sure the checkIn and checkOut dates match the reservation range.
+            </div>
+          </div>
+
+          <div class="faq-item" data-tags="invoice pdf">
+            <div class="faq-q">
+              <h6>Invoice not opening. What should I do?</h6>
+              <i class="fas fa-chevron-down faq-chevron text-muted"></i>
+            </div>
+            <div class="faq-a">
+              Check the reservationId exists. If reservation is not found, the API returns 404.
+              Also make sure PDFBox dependency is available in your project.
+            </div>
+          </div>
+
+          <div class="faq-item" data-tags="settings smtp">
+            <div class="faq-q">
+              <h6>SMTP test fails. What are the common issues?</h6>
+              <i class="fas fa-chevron-down faq-chevron text-muted"></i>
+            </div>
+            <div class="faq-a">
+              Common issues are wrong SMTP host, wrong port, blocked firewall, or incorrect email/password.
+              Check settings under EMAIL category.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-server me-2 text-success"></i>System Status</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="help-muted">API Session</span>
+            <span class="badge bg-secondary" id="apiSessionStatus">Checking...</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="help-muted">User</span>
+            <span class="badge bg-secondary" id="apiUserLabel">-</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="help-muted">Role</span>
+            <span class="badge bg-secondary" id="apiRoleLabel">-</span>
+          </div>
+
+          <button class="btn btn-outline-primary w-100" id="btnCheckMe">
+            <i class="fas fa-user me-1"></i>Check Logged User
+          </button>
+
+          <div class="small help-muted mt-3">
+            This uses <span class="kbd">/api/me</span> to confirm session.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="appToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <i class="fas fa-circle-check text-success me-2"></i>
+      <strong class="me-auto" id="toastTitle">Done</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toastBody">OK</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/layout.js"></script>
+<script src="assets/js/role-ui.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const todayLabel = document.getElementById("todayLabel");
+    if (todayLabel) {
+      todayLabel.textContent = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit"
+      });
+    }
+
+    document.querySelectorAll(".faq-item .faq-q").forEach(q => {
+      q.addEventListener("click", () => {
+        q.parentElement.classList.toggle("open");
+      });
+    });
+
+    document.getElementById("helpSearchBtn").addEventListener("click", runHelpSearch);
+    document.getElementById("helpClearBtn").addEventListener("click", () => {
+      document.getElementById("helpSearch").value = "";
+      showAllHelp();
+    });
+
+    document.getElementById("helpSearch").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") runHelpSearch();
+    });
+
+    document.querySelectorAll(".help-tag").forEach(tag => {
+      tag.addEventListener("click", () => {
+        const t = tag.getAttribute("data-tag");
+        document.getElementById("helpSearch").value = t;
+        runHelpSearch();
+      });
+    });
+
+    document.getElementById("btnCheckMe").addEventListener("click", checkMe);
+    document.getElementById("btnRefreshHelp").addEventListener("click", () => {
+      showToast("Refreshed", "Help page updated");
+      checkMe();
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", () => {
+      window.location.href = "api/logout";
+    });
+
+    document.getElementById("copySupport").addEventListener("click", async () => {
+      const txt = document.getElementById("supportText").innerText;
+      try {
+        await navigator.clipboard.writeText(txt);
+        showToast("Copied", "Support details copied");
+      } catch (e) {
+        showToast("Copy failed", "Browser blocked clipboard");
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        document.getElementById("helpSearch").focus();
+      }
+    });
+
+    checkMe();
+  });
+
+  function toggleSidebar() {
+    const sb = document.querySelector(".sidebar");
+    if (sb) sb.classList.toggle("open");
+  }
+
+  function runHelpSearch() {
+    const q = (document.getElementById("helpSearch").value || "").trim().toLowerCase();
+    if (!q) {
+      showAllHelp();
+      return;
+    }
+
+    const words = q.split(/\s+/).filter(Boolean);
+    let anyVisible = false;
+
+    document.querySelectorAll(".help-card").forEach(card => {
+      const tags = (card.getAttribute("data-tags") || "").toLowerCase();
+      const text = (card.innerText || "").toLowerCase();
+
+      const ok = words.every(w => tags.includes(w) || text.includes(w));
+      card.style.display = ok ? "" : "none";
+      if (ok) anyVisible = true;
+    });
+
+    document.querySelectorAll(".faq-item").forEach(item => {
+      const tags = (item.getAttribute("data-tags") || "").toLowerCase();
+      const text = (item.innerText || "").toLowerCase();
+
+      const ok = words.every(w => tags.includes(w) || text.includes(w));
+      item.style.display = ok ? "" : "none";
+    });
+
+    if (!anyVisible) {
+      showToast("No results", "Try another keyword (example: rooms, invoice, guest login)");
+    }
+  }
+
+  function showAllHelp() {
+    document.querySelectorAll(".help-card").forEach(card => card.style.display = "");
+    document.querySelectorAll(".faq-item").forEach(item => item.style.display = "");
+  }
+
+  async function checkMe() {
+    const sBadge = document.getElementById("apiSessionStatus");
+    const uBadge = document.getElementById("apiUserLabel");
+    const rBadge = document.getElementById("apiRoleLabel");
+
+    sBadge.className = "badge bg-secondary";
+    sBadge.textContent = "Checking...";
+    uBadge.textContent = "-";
+    rBadge.textContent = "-";
+
+    try {
+      const res = await fetch("api/me", { credentials: "include" });
+      const text = await res.text();
+
+      if (!res.ok) {
+        sBadge.className = "badge bg-danger";
+        sBadge.textContent = "No session";
+        return;
+      }
+
+      const data = JSON.parse(text);
+      if (!data.success) {
+        sBadge.className = "badge bg-danger";
+        sBadge.textContent = "No session";
+        return;
+      }
+
+      sBadge.className = "badge bg-success";
+      sBadge.textContent = "Active";
+      uBadge.textContent = data.username || "-";
+      rBadge.textContent = data.role || "-";
+
+    } catch (e) {
+      sBadge.className = "badge bg-danger";
+      sBadge.textContent = "Error";
+    }
+  }
+
+  function showToast(title, msg) {
+    const tEl = document.getElementById("appToast");
+    document.getElementById("toastTitle").textContent = title;
+    document.getElementById("toastBody").textContent = msg;
+
+    const toast = bootstrap.Toast.getOrCreateInstance(tEl, { delay: 2000 });
+    toast.show();
+  }
+</script>
+
+</body>
+</html>

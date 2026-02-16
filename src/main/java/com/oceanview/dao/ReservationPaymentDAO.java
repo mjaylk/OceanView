@@ -13,4 +13,5 @@ public interface ReservationPaymentDAO {
     boolean delete(int paymentId);
 
     ReservationPayment findById(int paymentId);
+    int countByReservation(int reservationId);
 }

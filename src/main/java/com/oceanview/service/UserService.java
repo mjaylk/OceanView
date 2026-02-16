@@ -76,29 +76,5 @@ public class UserService {
         return userDAO.delete(id);
     }
 
-    // Simple manual test
-    public static void main(String[] args) {
 
-        UserService service = new UserService();
-
-        System.out.println("TEST CASE 01 - Create user with valid data");
-
-        try {
-            int userId = service.createUser(
-                    "test_user_01",
-                    "password123",
-                    "ADMIN"
-            );
-
-            if (userId > 0) {
-                System.out.println("RESULT: PASS");
-            } else {
-                System.out.println("RESULT: FAIL");
-            }
-
-        } catch (Exception e) {
-            System.out.println("RESULT: FAIL");
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
 }

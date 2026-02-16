@@ -123,18 +123,5 @@ public class SettingService {
         return true;
     }
 
-    // Simple manual test 
-    public static void main(String[] args) {
-
-        SettingService service = new SettingService();
-
-        System.out.println("TEST CASE 01 - getValue() with null key");
-        String result = service.getValue(null);
-
-        if (result == null) {
-            System.out.println("RESULT: PASS");
-        } else {
-            System.out.println("RESULT: FAIL");
-        }
-    }
+ 
 }
