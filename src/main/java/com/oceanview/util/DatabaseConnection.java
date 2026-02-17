@@ -37,30 +37,5 @@ public class DatabaseConnection {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
-    // test cases
-    public static void main(String[] args) {
 
-        // test case 01 instance check
-        DatabaseConnection db1 = DatabaseConnection.getInstance();
-        DatabaseConnection db2 = DatabaseConnection.getInstance();
-        System.out.println("Test 01 Singleton check: " + (db1 == db2));
-
-        // test case 02 connection test
-        try {
-            Connection con = db1.getConnection();
-            System.out.println("Test 02 DB connection: SUCCESS");
-            con.close();
-        } catch (SQLException e) {
-            System.out.println("Test 02 DB connection: FAILED");
-        }
-
-        // test case 03 close connection test
-        try {
-            Connection con = db1.getConnection();
-            con.close();
-            System.out.println("Test 03 Connection close: SUCCESS");
-        } catch (SQLException e) {
-            System.out.println("Test 03 Connection close: FAILED");
-        }
-    }
 }
