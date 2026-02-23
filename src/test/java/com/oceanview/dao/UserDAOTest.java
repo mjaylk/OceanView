@@ -17,7 +17,7 @@ public class UserDAOTest {
 
     @Test
     void TEST_CASE_01_findByUsername_shouldReturnUser_whenExists() {
-        // CHANGE this username to a real username in your DB
+       
         String username = "admin";
 
         User u = userDAO.findByUsername(username);
