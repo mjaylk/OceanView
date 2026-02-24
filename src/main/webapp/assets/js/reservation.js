@@ -67,6 +67,7 @@ function setStatusBadge(el, status) {
 }
 
 function openNewReservationModal() {
+	
   resetReservationForm();
   document.getElementById("reservationModalTitle").innerHTML =
     `<i class="fas fa-calendar-plus me-2 text-primary"></i>New Reservation`;
@@ -87,8 +88,11 @@ function resetReservationForm() {
   document.getElementById("roomMeta").textContent = "";
   document.getElementById("roomBlockedHint").textContent = "";
   document.getElementById("guestSuggestions").innerHTML = "";
-  bookedRanges = [];
 
+  lastGuestResults = [];
+  document.getElementById("guestSearch").value = "";
+
+  bookedRanges = [];
   hideAlert("form");
   renderCalc({ nights: "", rate: "", subtotal: "", total: "" });
 }

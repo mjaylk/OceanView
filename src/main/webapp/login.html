@@ -3,172 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OceanView Login</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .login-card {
-      background: #1a202c;
-      padding: 40px 32px;
-      border-radius: 16px;
-      border: 1px solid rgba(66,153,225,0.2);
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .logo { text-align: center; margin-bottom: 30px; }
-
-    .logo h1 {
-      font-size: 28px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #4299e1, #60a5fa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-
-    .logo p { color: #94a3b8; font-size: 15px; }
-
-    .form-group { margin-bottom: 20px; }
-
-    input {
-      width: 100%;
-      padding: 16px 20px;
-      background: #0d141a;
-      border: 2px solid rgba(66,153,225,0.2);
-      border-radius: 12px;
-      color: #e2e8f0;
-      font-size: 16px;
-      transition: border-color 0.3s ease;
-    }
-
-    input:focus { outline: none; border-color: #4299e1; }
-
-    input::placeholder { color: #64748b; }
-
-    button {
-      width: 100%;
-      padding: 16px;
-      background: #4299e1;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover { background: #3182ce; }
-
-    body.redirecting { opacity: 0; transition: opacity 0.25s ease; }
-
-    .alert {
-      display: none;
-      margin-bottom: 16px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      color: #fecaca;
-      font-size: 14px;
-    }
-    .alert.show { display: block; }
-
-    @media (max-width: 480px) {
-      .login-card { padding: 32px 24px; margin: 10px; }
-    }
-  </style>
+  <title>OceanView — Admin Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="assets/css/login.css" rel="stylesheet">
 </head>
 <body>
 
   <script>
     (async function () {
       const ctx = "/" + window.location.pathname.split("/")[1];
-
-      const params = new URLSearchParams(window.location.search);
-      window.__login_error = params.get("error");
-      window.__login_unauth = params.get("unauthorized");
-
       try {
         const res = await fetch(ctx + "/api/me", { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           if (data && data.success) {
             document.body.classList.add("redirecting");
-            setTimeout(() => {
-              window.location.href = "reservation.html";
-            }, 150);
+            setTimeout(() => { window.location.href = "reservation.html"; }, 150);
           }
         }
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     })();
   </script>
 
-  <div class="login-card">
-    <div class="logo">
-      <h1>OceanView</h1>
-      <p>Admin / Staff Login</p>
+  <div class="panel-image">
+    <svg class="waves" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#041526"/>
+          <stop offset="40%" stop-color="#0d2a4a"/>
+          <stop offset="100%" stop-color="#1a4a7e"/>
+        </linearGradient>
+        <linearGradient id="deepWater" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1a4a7e" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#0b1f3a"/>
+        </linearGradient>
+        <linearGradient id="midWater" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1e5c99" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#163354"/>
+        </linearGradient>
+        <radialGradient id="moonGlow" cx="72%" cy="22%" r="30%">
+          <stop offset="0%" stop-color="#fff8e8" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <radialGradient id="moonCore" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff8e8"/>
+          <stop offset="70%" stop-color="#f5e6c0"/>
+          <stop offset="100%" stop-color="#e2c97e"/>
+        </radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="softGlow"><feGaussianBlur stdDeviation="18" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect width="1200" height="800" fill="url(#skyGrad)"/>
+      <rect width="1200" height="800" fill="url(#moonGlow)"/>
+      <g opacity="0.7">
+        <circle cx="80" cy="50" r="1.2" fill="white" opacity="0.8"/>
+        <circle cx="210" cy="30" r="0.8" fill="white" opacity="0.6"/>
+        <circle cx="340" cy="70" r="1.5" fill="white" opacity="0.9"/>
+        <circle cx="450" cy="25" r="0.9" fill="white" opacity="0.7"/>
+        <circle cx="550" cy="55" r="1.1" fill="white" opacity="0.8"/>
+        <circle cx="650" cy="40" r="0.7" fill="white" opacity="0.5"/>
+        <circle cx="130" cy="110" r="1.0" fill="white" opacity="0.6"/>
+        <circle cx="280" cy="90" r="1.3" fill="white" opacity="0.8"/>
+        <circle cx="390" cy="120" r="0.8" fill="white" opacity="0.5"/>
+        <circle cx="170" cy="160" r="0.9" fill="white" opacity="0.7"/>
+        <circle cx="310" cy="145" r="1.1" fill="white" opacity="0.6"/>
+        <circle cx="490" cy="100" r="0.7" fill="white" opacity="0.8"/>
+      </g>
+      <g class="float-orb" style="transform-origin:855px 175px">
+        <circle cx="855" cy="175" r="56" fill="url(#moonGlow)" filter="url(#softGlow)" opacity="0.6"/>
+        <circle cx="855" cy="175" r="38" fill="url(#moonCore)" filter="url(#glow)"/>
+        <circle cx="842" cy="163" r="5" fill="#c8a850" opacity="0.3"/>
+        <circle cx="866" cy="182" r="3.5" fill="#c8a850" opacity="0.2"/>
+      </g>
+      <ellipse cx="855" cy="430" rx="18" ry="80" fill="#e2c97e" opacity="0.12" filter="url(#softGlow)"/>
+      <path d="M0,300 L1200,300 L1200,800 L0,800 Z" fill="url(#deepWater)"/>
+      <path class="wave2" d="M0,260 C200,200 400,300 600,240 C800,180 1000,280 1200,220 L1200,800 L0,800 Z" fill="url(#midWater)"/>
+      <path class="wave1" d="M0,200 C200,130 400,260 600,180 C800,100 1000,220 1200,160 L1200,800 L0,800 Z" fill="#1a4a7e" opacity="0.5"/>
+      <ellipse cx="200" cy="240" rx="80" ry="4" fill="white" opacity="0.07"/>
+      <ellipse cx="700" cy="210" rx="120" ry="3" fill="white" opacity="0.06"/>
+      <ellipse cx="1050" cy="255" rx="70" ry="3" fill="white" opacity="0.05"/>
+      <rect x="0" y="295" width="1200" height="2" fill="white" opacity="0.08"/>
+    </svg>
+    <div class="overlay-text">
+      <p class="tagline">Staff &amp; Administration</p>
+      <div class="divider-line"></div>
+      <h1 class="brand-name">Ocean<em>View</em></h1>
+      <p class="tagline">Manage your resort</p>
     </div>
+  </div>
 
-    <div id="loginAlert" class="alert"></div>
+  <div class="panel-form">
+    <div class="form-inner">
 
-    <form action="api/login" method="post">
-      <div class="form-group">
-        <input name="username" placeholder="Username" required autocomplete="username" />
-      </div>
+      <span class="mobile-brand">Ocean<em>View</em></span>
 
-      <div class="form-group">
-        <input name="password" type="password" placeholder="Password" required autocomplete="current-password" />
-      </div>
+      <p class="form-eyebrow">Admin Portal</p>
+      <h2 class="form-title">Welcome<br>back.</h2>
+      <p class="form-subtitle">Sign in with your staff credentials<br>to access the admin panel.</p>
 
-      <button type="submit">Login</button>
-    </form>
+      <div id="loginAlert" class="alert-error"></div>
+
+      <form action="api/login" method="post">
+        <div class="field-group">
+          <label class="field-label" for="username">Username</label>
+          <div class="field-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="#c8dff0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4,20 C4,16 8,13 12,13 C16,13 20,16 20,20"/>
+            </svg>
+            <input id="username" name="username" type="text" placeholder="Enter your username" required autocomplete="username">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="password">Password</label>
+          <div class="field-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="#c8dff0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7,11V7a5,5,0,0,1,10,0v4"/>
+            </svg>
+            <input id="password" name="password" type="password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+        </div>
+        <button class="btn-login" type="submit">Sign In</button>
+      </form>
+
+      <p class="footer-note">Having trouble? Contact your system administrator.</p>
+    </div>
   </div>
 
   <script>
     const contextPath = '/OceanViewResortBooking';
-
     async function loadFlashMessages() {
       try {
         const res = await fetch(contextPath + '/api/flash', { credentials: 'include' });
         if (!res.ok) return;
-
         const data = await res.json();
         const alertBox = document.getElementById('loginAlert');
         if (!alertBox) return;
-
-        if (data.error) {
-          alertBox.textContent = data.error;
-          alertBox.classList.add('show');
-        } else {
-          alertBox.textContent = '';
-          alertBox.classList.remove('show');
-        }
-      } catch (e) {
-        // ignore
-      }
+        if (data.error) { alertBox.textContent = data.error; alertBox.classList.add('show'); }
+        else { alertBox.textContent = ''; alertBox.classList.remove('show'); }
+      } catch (e) {}
     }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      loadFlashMessages();
-    });
+    document.addEventListener('DOMContentLoaded', loadFlashMessages);
   </script>
-
 
 </body>
 </html>

@@ -8,7 +8,6 @@ import java.util.List;
 
 public class GuestService {
 
-    // dao object
     private final GuestDAO dao = new GuestDAOImpl();
 
     // list guests
@@ -38,6 +37,21 @@ public class GuestService {
     public List<Guest> searchGuests(String q) {
         if (q == null || q.trim().length() < 2) return List.of();
         return dao.search(q.trim(), 10);
+    }
+
+    // get email by guest id
+    public String getEmailByGuestId(int guestId) {
+        if (guestId <= 0) return null;
+        Guest g = dao.findById(guestId);  // ← fixed: was guestDao, now dao
+        if (g == null) return null;
+        return g.getEmail();
+    }
+
+    // get guest id by email
+    public int getGuestIdByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) return 0;
+        Guest g = dao.findByEmail(email.trim());
+        return (g == null) ? 0 : g.getGuestId();
     }
 
     // create guest
@@ -84,18 +98,12 @@ public class GuestService {
         return dao.update(existing);
     }
 
-    // get guest id by email
-    public int getGuestIdByEmail(String email) {
-        if (email == null || email.trim().isEmpty()) return 0;
-        Guest g = dao.findByEmail(email.trim());
-        return (g == null) ? 0 : g.getGuestId();
-    }
-
     // update guest password
     public void updateGuestPassword(int guestId, String password) {
 
         if (guestId <= 0) throw new IllegalArgumentException("Invalid guestId");
-        if (password == null || password.trim().isEmpty()) throw new IllegalArgumentException("Password required");
+        if (password == null || password.trim().isEmpty())
+            throw new IllegalArgumentException("Password required");
 
         boolean ok = dao.updatePassword(guestId, password.trim());
         if (!ok) throw new RuntimeException("Failed to update guest password");
@@ -107,13 +115,14 @@ public class GuestService {
         return dao.delete(guestId);
     }
 
-    // ensure guest
+    // ensure guest (no password)
     public int ensureGuest(String fullName, String email, String contactNumber) {
         return ensureGuestWithPassword(fullName, email, contactNumber, null);
     }
 
     // ensure guest with password
-    public int ensureGuestWithPassword(String fullName, String email, String contactNumber, String password) {
+    public int ensureGuestWithPassword(String fullName, String email,
+                                       String contactNumber, String password) {
 
         if (fullName == null || fullName.trim().isEmpty())
             throw new IllegalArgumentException("Guest name required");
@@ -121,7 +130,7 @@ public class GuestService {
             throw new IllegalArgumentException("Contact number required");
 
         String phone = contactNumber.trim();
-        String em = (email == null ? null : email.trim());
+        String em    = (email == null) ? null : email.trim();
 
         Guest g = dao.findByContactNumber(phone);
         if (g == null && em != null && !em.isEmpty()) {
@@ -153,11 +162,11 @@ public class GuestService {
     // guest login
     public Guest loginGuest(String email, String password) {
 
-        if (email == null || email.trim().isEmpty()) throw new IllegalArgumentException("Email required");
-        if (password == null || password.trim().isEmpty()) throw new IllegalArgumentException("Password required");
+        if (email == null || email.trim().isEmpty())
+            throw new IllegalArgumentException("Email required");
+        if (password == null || password.trim().isEmpty())
+            throw new IllegalArgumentException("Password required");
 
         return dao.findByEmailAndPassword(email.trim(), password.trim());
     }
-
-
 }

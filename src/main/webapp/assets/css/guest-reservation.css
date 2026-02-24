@@ -1,0 +1,359 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ocean-deep: #0b1f3a;
+      --ocean-mid: #163354;
+      --ocean-surface: #1e4a7a;
+      --foam: #c8dff0;
+      --sand: #f0e8d8;
+      --gold: #c9a84c;
+      --gold-light: #e2c97e;
+      --white: #fdfaf6;
+      --text-muted: rgba(200,223,240,0.5);
+      --border: rgba(200,223,240,0.1);
+      --card-bg: rgba(22,51,84,0.5);
+    }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--ocean-deep);
+      color: var(--white);
+      min-height: 100vh;
+      font-weight: 300;
+    }
+
+    /* ── Ambient background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(30,74,122,0.6) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 80% 90%, rgba(201,168,76,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Top nav bar ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11,31,58,0.85);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: 0.04em;
+      text-decoration: none;
+    }
+    .brand em { font-style: italic; color: var(--gold-light); }
+
+    .btn-logout {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(201,168,76,0.08);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 6px;
+      padding: 8px 18px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .btn-logout:hover {
+      background: rgba(201,168,76,0.18);
+      border-color: rgba(201,168,76,0.6);
+      color: var(--gold-light);
+    }
+
+    /* ── Page wrapper ── */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-eyebrow {
+      font-size: 0.68rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--white);
+    }
+
+    .page-title em { font-style: italic; color: var(--gold-light); }
+
+    .page-subtitle {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .title-rule {
+      width: 48px;
+      height: 1px;
+      background: var(--gold);
+      opacity: 0.5;
+      margin: 18px 0;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      flex: 1;
+      min-width: 140px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .stat-value.gold { color: var(--gold-light); }
+
+    /* ── Table card ── */
+    .table-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .table-card-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-card-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .table-responsive { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      border-bottom: 1px solid var(--border);
+    }
+
+    thead th {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 14px 28px;
+      white-space: nowrap;
+    }
+
+    thead th:last-child { text-align: right; }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(200,223,240,0.05);
+      transition: background 0.18s;
+      animation: rowIn 0.4s ease both;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(30,74,122,0.35); }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    tbody td {
+      padding: 18px 28px;
+      font-size: 0.88rem;
+      color: var(--white);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    tbody td:last-child { text-align: right; }
+
+    .res-number {
+     
+      font-size: 1.05rem;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      color: var(--gold-light);
+    }
+
+    .room-type {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      letter-spacing: 0.05em;
+    }
+
+    .date-cell {
+      font-size: 0.85rem;
+      color: var(--foam);
+      opacity: 0.85;
+    }
+
+    .amount {
+     
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--white);
+    }
+
+    .discount-cell {
+    
+      font-size: 1rem;
+      font-weight: 400;
+      color: #6ee7b7;
+    }
+
+    .tax-cell {
+   
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--foam);
+      opacity: 0.75;
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      border-radius: 20px;
+      padding: 4px 12px;
+      border: 1px solid;
+    }
+
+    .badge-confirmed {
+      color: #6ee7b7;
+      background: rgba(110,231,183,0.1);
+      border-color: rgba(110,231,183,0.3);
+    }
+    .badge-checkedin {
+      color: var(--gold-light);
+      background: rgba(201,168,76,0.12);
+      border-color: rgba(201,168,76,0.3);
+    }
+    .badge-checkedout {
+      color: var(--text-muted);
+      background: rgba(200,223,240,0.05);
+      border-color: rgba(200,223,240,0.15);
+    }
+    .badge-cancelled {
+      color: #fca5a5;
+      background: rgba(252,165,165,0.08);
+      border-color: rgba(252,165,165,0.2);
+    }
+    .badge-default {
+      color: var(--foam);
+      background: rgba(200,223,240,0.07);
+      border-color: var(--border);
+    }
+
+    .state-row td {
+      padding: 60px 28px !important;
+      text-align: center;
+    }
+
+    .state-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    .state-msg {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .loading-dots span {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      margin: 0 3px;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%,100% { opacity: 0.3; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Page entrance animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header  { animation: fadeUp 0.5s ease 0.05s both; }
+    .stats-row    { animation: fadeUp 0.5s ease 0.15s both; }
+    .table-card   { animation: fadeUp 0.5s ease 0.25s both; }

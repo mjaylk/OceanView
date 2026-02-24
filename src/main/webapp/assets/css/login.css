@@ -1,0 +1,54 @@
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ocean-deep: #0b1f3a; --ocean-mid: #163354; --ocean-surface: #1e4a7a;
+      --foam: #c8dff0; --gold: #c9a84c; --gold-light: #e2c97e;
+      --white: #fdfaf6; --text-muted: rgba(200,223,240,0.5); --border: rgba(200,223,240,0.1);
+    }
+    body { font-family: 'Jost', sans-serif; font-weight: 300; background: var(--ocean-deep); min-height: 100vh; display: flex; align-items: stretch; overflow: hidden; transition: opacity 0.25s ease; }
+    body.redirecting { opacity: 0; }
+    .panel-image { flex: 1; position: relative; overflow: hidden; display: none; }
+    @media (min-width: 860px) { .panel-image { display: block; } }
+    .panel-image svg.waves { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .panel-image .overlay-text { position: absolute; bottom: 60px; left: 48px; right: 48px; z-index: 10; }
+    .brand-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem,4.5vw,4.2rem); font-weight: 300; color: var(--white); letter-spacing: 0.04em; line-height: 1.1; }
+    .brand-name em { font-style: italic; color: var(--gold-light); }
+    .tagline { font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--foam); opacity: 0.7; }
+    .divider-line { width: 48px; height: 1px; background: var(--gold); opacity: 0.6; margin: 18px 0; }
+    .panel-form { width: 100%; background: var(--ocean-deep); display: flex; align-items: center; justify-content: center; padding: 40px 32px; position: relative; z-index: 2; }
+    @media (min-width: 860px) { .panel-form { width: 460px; flex: none; } }
+    .panel-form::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); opacity: 0.3; pointer-events: none; }
+    .form-inner { width: 100%; max-width: 360px; position: relative; }
+    .mobile-brand { display: block; font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--white); letter-spacing: 0.05em; margin-bottom: 36px; }
+    .mobile-brand em { font-style: italic; color: var(--gold-light); }
+    @media (min-width: 860px) { .mobile-brand { display: none; } }
+    .form-eyebrow { font-size: 0.68rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+    .form-title { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 300; color: var(--white); line-height: 1.15; margin-bottom: 10px; }
+    .form-subtitle { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 36px; }
+    .alert-error { display: none; background: rgba(220,60,60,0.1); border: 1px solid rgba(220,60,60,0.3); border-radius: 8px; padding: 12px 16px; font-size: 0.82rem; color: #f9a0a0; margin-bottom: 22px; letter-spacing: 0.02em; }
+    .alert-error.show { display: block; }
+    .field-group { margin-bottom: 20px; }
+    .field-label { display: block; font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--foam); opacity: 0.7; margin-bottom: 8px; }
+    .field-wrap { position: relative; }
+    .field-wrap input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(200,223,240,0.15); border-radius: 8px; color: var(--white); font-family: 'Jost', sans-serif; font-size: 0.9rem; font-weight: 300; letter-spacing: 0.04em; padding: 14px 16px 14px 46px; outline: none; transition: border-color 0.25s, background 0.25s, box-shadow 0.25s; }
+    .field-wrap input::placeholder { color: rgba(200,223,240,0.22); }
+    .field-wrap input:focus { border-color: var(--gold); background: rgba(255,255,255,0.07); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+    .field-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; opacity: 0.38; pointer-events: none; }
+    .btn-login { width: 100%; border: none; border-radius: 8px; padding: 15px 24px; font-family: 'Jost', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; cursor: pointer; margin-top: 8px; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%); background-size: 200% 100%; color: var(--ocean-deep); transition: background-position 0.4s, transform 0.15s, box-shadow 0.3s; box-shadow: 0 4px 20px rgba(201,168,76,0.25); }
+    .btn-login:hover { background-position: 100% 0; transform: translateY(-1px); box-shadow: 0 8px 30px rgba(201,168,76,0.4); }
+    .btn-login:active { transform: translateY(0); }
+    .footer-note { margin-top: 28px; font-size: 0.72rem; color: var(--text-muted); text-align: center; letter-spacing: 0.03em; }
+    @keyframes shimmer { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .form-inner > * { animation: shimmer 0.5s ease both; }
+    .form-inner > *:nth-child(1) { animation-delay: 0.05s; }
+    .form-inner > *:nth-child(2) { animation-delay: 0.10s; }
+    .form-inner > *:nth-child(3) { animation-delay: 0.15s; }
+    .form-inner > *:nth-child(4) { animation-delay: 0.20s; }
+    .form-inner > *:nth-child(5) { animation-delay: 0.25s; }
+    .form-inner > *:nth-child(6) { animation-delay: 0.30s; }
+    .form-inner > *:nth-child(7) { animation-delay: 0.35s; }
+    @keyframes waveMove1 { 0%,100% { d: path("M0,200 C200,130 400,260 600,180 C800,100 1000,220 1200,160 L1200,500 L0,500 Z"); } 50% { d: path("M0,200 C200,260 400,130 600,200 C800,260 1000,140 1200,200 L1200,500 L0,500 Z"); } }
+    @keyframes waveMove2 { 0%,100% { d: path("M0,260 C200,200 400,300 600,240 C800,180 1000,280 1200,220 L1200,500 L0,500 Z"); } 50% { d: path("M0,260 C200,310 400,210 600,270 C800,320 1000,220 1200,260 L1200,500 L0,500 Z"); } }
+    @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-14px); } }
+    .wave1 { animation: waveMove1 8s ease-in-out infinite; }
+    .wave2 { animation: waveMove2 11s ease-in-out infinite; }
+    .float-orb { animation: float 6s ease-in-out infinite; }

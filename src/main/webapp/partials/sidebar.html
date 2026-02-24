@@ -1,17 +1,22 @@
 <!-- layout.html -->
+
 <button class="toggle-btn" type="button" onclick="toggleSidebar()">
   <i class="fas fa-bars fs-5"></i>
 </button>
 
-
 <div id="flashArea" class="global-flash-area"></div>
 
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <nav class="sidebar" id="sidebar">
+
   <div class="sidebar-header">
     <div class="logo-section">
-      <div class="logo-icon"><i class="fas fa-water-wave"></i></div>
+      <div class="logo-icon">
+        <i class="fas fa-water"></i>
+      </div>
       <div>
-        <h4 class="sidebar-title mb-0">OceanView</h4>
+        <h4 class="sidebar-title mb-0">Ocean<em>View</em></h4>
         <p class="sidebar-subtitle mb-0">Admin Panel</p>
       </div>
     </div>
@@ -21,50 +26,70 @@
   </div>
 
   <div class="nav-section">
-    <ul class="nav flex-column list-unstyled px-2">
+    <ul class="nav flex-column list-unstyled px-0 mb-0">
+
       <li class="nav-item" data-role="ADMIN,STAFF">
-        <a class="nav-link" href="dashboard.html"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+        <a class="nav-link" href="dashboard.html">
+          <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+        </a>
       </li>
 
       <li class="nav-item" data-role="ADMIN,STAFF">
-        <a class="nav-link" href="reservation.html"><i class="fas fa-calendar-check"></i><span>Reservations</span></a>
+        <a class="nav-link" href="reservation.html">
+          <i class="fas fa-calendar-check"></i><span>Reservations</span>
+        </a>
       </li>
 
       <li class="nav-item" data-role="ADMIN,STAFF">
-        <a class="nav-link" href="guest.html"><i class="fas fa-users"></i><span>Guests</span></a>
+        <a class="nav-link" href="guest.html">
+          <i class="fas fa-users"></i><span>Guests</span>
+        </a>
       </li>
 
       <li class="nav-item" data-role="ADMIN">
-        <a class="nav-link" href="rooms.html"><i class="fas fa-building"></i><span>Rooms</span></a>
+        <a class="nav-link" href="rooms.html">
+          <i class="fas fa-building"></i><span>Rooms</span>
+        </a>
       </li>
 
       <li class="nav-item" data-role="ADMIN">
-        <a class="nav-link" href="users.html"><i class="fas fa-users-gear"></i><span>Users</span></a>
+        <a class="nav-link" href="users.html">
+          <i class="fas fa-users-gear"></i><span>Users</span>
+        </a>
       </li>
 
       <li class="nav-item" data-role="ADMIN">
-        <a class="nav-link" href="settings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
+        <a class="nav-link" href="settings.html">
+          <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
       </li>
 
       <li class="nav-item" data-role="ADMIN,STAFF">
-        <a class="nav-link" href="help.html"><i class="fas fa-question"></i><span>Help</span></a>
+        <a class="nav-link" href="help.html">
+          <i class="fas fa-question-circle"></i><span>Help</span>
+        </a>
       </li>
+
     </ul>
   </div>
 
-  <a class="nav-link logout-link text-warning" href="/OceanViewResortBooking/api/logout">
+  <a class="logout-link" href="/OceanViewResortBooking/api/logout">
     <i class="fas fa-sign-out-alt"></i><span>Logout</span>
   </a>
+
 </nav>
 
+
+<!-- Help FAB -->
 <button class="help-fab" type="button" onclick="openHelpPanel()" aria-label="Help">
   <i class="fas fa-circle-question"></i>
 </button>
 
+<!-- Help panel -->
 <div class="help-panel" id="helpPanel">
   <div class="help-panel-header">
     <div class="help-panel-title">
-      <i class="fas fa-circle-question me-2"></i>Help
+      <i class="fas fa-circle-question"></i> Help
     </div>
     <button class="help-panel-close" type="button" onclick="closeHelpPanel()" aria-label="Close">
       <i class="fas fa-times"></i>
@@ -75,29 +100,27 @@
     <div class="small text-muted mb-2">Quick links</div>
 
     <div class="d-grid gap-2 mb-3">
-      <a class="btn btn-sm btn-outline-primary" href="help.html">
+      <a class="btn btn-outline-primary btn-sm" href="help.html">
         <i class="fas fa-book-open me-1"></i>Open Help Page
       </a>
-      <a class="btn btn-sm btn-outline-success" href="reservation.html">
+      <a class="btn btn-outline-success btn-sm" href="reservation.html">
         <i class="fas fa-calendar-plus me-1"></i>Create Reservation
       </a>
-      <a class="btn btn-sm btn-outline-info" href="guest.html">
+      <a class="btn btn-outline-info btn-sm" href="guest.html">
         <i class="fas fa-users me-1"></i>Guests
       </a>
     </div>
 
-    <hr class="my-3">
+    <hr>
 
     <div class="small text-muted mb-2">Support contact</div>
-
     <div class="small">
-      <div class="text-muted">Email</div>
-      <div id="sbSupportEmail">-</div>
+      <div class="text-muted-gold">Email</div>
+      <div id="sbSupportEmail">—</div>
     </div>
-
     <div class="small mt-2">
-      <div class="text-muted">Phone</div>
-      <div id="sbSupportPhone">-</div>
+      <div class="text-muted-gold">Phone</div>
+      <div id="sbSupportPhone">—</div>
     </div>
   </div>
 </div>
