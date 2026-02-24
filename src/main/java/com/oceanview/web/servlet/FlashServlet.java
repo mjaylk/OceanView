@@ -16,7 +16,7 @@ public class FlashServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
 
         String success = "";
-        String error = "";
+        String error   = "";
 
         if (session != null) {
             Object s = session.getAttribute(Flash.KEY_SUCCESS);
@@ -24,19 +24,16 @@ public class FlashServlet extends HttpServlet {
 
             if (s != null) {
                 success = String.valueOf(s);
-                // show only once
                 session.removeAttribute(Flash.KEY_SUCCESS);
             }
-            
+
             if (e != null) {
                 error = String.valueOf(e);
-                // show only once 
                 session.removeAttribute(Flash.KEY_ERROR);
             }
-            
-       
+
             if (!error.isEmpty()) {
-                success = ""; // Clear success if there's an error
+                success = "";
             }
         }
 

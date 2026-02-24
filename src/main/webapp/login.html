@@ -73,7 +73,6 @@
 
     button:hover { background: #3182ce; }
 
-    /* Fade-out on redirect */
     body.redirecting { opacity: 0; transition: opacity 0.25s ease; }
 
     .alert {
@@ -95,31 +94,27 @@
 </head>
 <body>
 
-
   <script>
     (async function () {
       const ctx = "/" + window.location.pathname.split("/")[1];
 
-     
       const params = new URLSearchParams(window.location.search);
       window.__login_error = params.get("error");
       window.__login_unauth = params.get("unauthorized");
 
       try {
         const res = await fetch(ctx + "/api/me", { credentials: "include" });
-
- 
         if (res.ok) {
           const data = await res.json();
           if (data && data.success) {
             document.body.classList.add("redirecting");
             setTimeout(() => {
-              window.location.href = "reservation.html"; 
+              window.location.href = "reservation.html";
             }, 150);
           }
         }
       } catch (e) {
-    
+        // ignore
       }
     })();
   </script>
@@ -146,22 +141,34 @@
   </div>
 
   <script>
- 
-    (function () {
-      const alertBox = document.getElementById("loginAlert");
-      if (!alertBox) return;
+    const contextPath = '/OceanViewResortBooking';
 
-      const params = new URLSearchParams(window.location.search);
+    async function loadFlashMessages() {
+      try {
+        const res = await fetch(contextPath + '/api/flash', { credentials: 'include' });
+        if (!res.ok) return;
 
-      if (params.get("error") === "1") {
-        alertBox.textContent = "Invalid username or password.";
-        alertBox.classList.add("show");
-      } else if (params.get("unauthorized") === "1") {
-        alertBox.textContent = "Session expired. Please login again.";
-        alertBox.classList.add("show");
+        const data = await res.json();
+        const alertBox = document.getElementById('loginAlert');
+        if (!alertBox) return;
+
+        if (data.error) {
+          alertBox.textContent = data.error;
+          alertBox.classList.add('show');
+        } else {
+          alertBox.textContent = '';
+          alertBox.classList.remove('show');
+        }
+      } catch (e) {
+        // ignore
       }
-    })();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      loadFlashMessages();
+    });
   </script>
+
 
 </body>
 </html>

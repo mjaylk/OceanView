@@ -196,8 +196,7 @@ window.loadFlashMessages = function() {
 
     var html = "";
     
-    // IMPORTANT: Only show ONE message - prioritize error over success
-    // This prevents showing both old error + new success
+
     if (d.error && typeof d.error === 'string' && d.error.length > 0) {
       html += createFlashBox("error", d.error);
     } else if (d.success && typeof d.success === 'string' && d.success.length > 0) {

@@ -305,7 +305,30 @@
               </div>
             </div>
           </div>
+<div class="col-12">
+  <div class="border rounded-3 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="text-muted small">Payments</div>
+      <small class="text-muted" id="vPaySummary">-</small>
+    </div>
 
+    <div class="table-responsive">
+      <table class="table table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th class="text-end">Amount</th>
+            <th>Method</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="vPaymentHistoryBody">
+          <tr><td colspan="4" class="text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
           <div class="col-12">
             <div class="text-muted small mb-1">Notes</div>
             <div class="border rounded-3 p-3" id="vNotes">-</div>
@@ -316,7 +339,7 @@
       <div class="modal-footer">
         <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
 
-        <!-- IMPORTANT: this button was missing in your HTML -->
+    
         <button class="btn btn-success" id="vPaymentBtn" type="button" style="display:none;">
           <i class="fas fa-money-bill me-1"></i>Payment
         </button>

@@ -415,7 +415,9 @@ async function loadBookedRangesForRoom(roomId) {
 
 async function viewReservation(id) {
   try {
-    const res = await fetch(`${BASE}/api/reservations/detail?id=${encodeURIComponent(id)}`, { credentials: "same-origin" });
+    const res = await fetch(`${BASE}/api/reservations/detail?id=${encodeURIComponent(id)}`, {
+      credentials: "same-origin"
+    });
     const txt = await res.text();
     let data = {};
     try { data = JSON.parse(txt); } catch (e) {}
@@ -434,61 +436,76 @@ async function viewReservation(id) {
     document.getElementById("vReservationNumber").textContent = r.reservationNumber || "-";
     setStatusBadge(document.getElementById("vStatus"), r.status);
 
-    document.getElementById("vGuestName").textContent = r.guestName || ("Guest #" + (r.guestId ?? "-"));
+    document.getElementById("vGuestName").textContent =
+      r.guestName || ("Guest #" + (r.guestId ?? "-"));
     document.getElementById("vGuestEmail").textContent = r.guestEmail || "-";
     document.getElementById("vGuestPhone").textContent = r.guestContactNumber || "-";
 
-    document.getElementById("vRoomNumber").textContent = r.roomNumber || ("Room #" + (r.roomId ?? "-"));
-    document.getElementById("vDates").textContent = `${r.checkInDate || "-"} → ${r.checkOutDate || "-"}`;
-    document.getElementById("vNights").textContent = `Nights: ${r.nights ?? "-"}`;
+    document.getElementById("vRoomNumber").textContent =
+      r.roomNumber || ("Room #" + (r.roomId ?? "-"));
+    document.getElementById("vDates").textContent =
+      `${r.checkInDate || "-"} → ${r.checkOutDate || "-"}`;
+    document.getElementById("vNights").textContent =
+      `Nights: ${r.nights ?? "-"}`;
 
     document.getElementById("vRate").textContent = money(r.ratePerNight ?? 0);
     document.getElementById("vSubtotal").textContent = money(r.subtotal ?? 0);
     document.getElementById("vTax").textContent = money(r.tax ?? 0);
     document.getElementById("vTotal").textContent = money(r.totalAmount ?? 0);
-    document.getElementById("vDiscount").textContent = `Discount: ${money(r.discount ?? 0)}`;
+    document.getElementById("vDiscount").textContent =
+      `Discount: ${money(r.discount ?? 0)}`;
 
     document.getElementById("vPaid").textContent = money(r.amountPaid ?? 0);
-    document.getElementById("vPayStatus").textContent = String(r.paymentStatus || "UNPAID");
+    document.getElementById("vPayStatus").textContent =
+      String(r.paymentStatus || "UNPAID");
 
     document.getElementById("vNotes").textContent = r.notes || "-";
 
-    // payment button logic
-    const paymentStatus = String(r.paymentStatus || "UNPAID").toUpperCase();
+    // Calculate amounts for payments section
     const amountPaid = Number(r.amountPaid || 0);
     const totalAmount = Number(r.totalAmount || 0);
-    const remaining = round2(totalAmount - amountPaid);
 
+   
     const paymentBtn = document.getElementById("vPaymentBtn");
     if (paymentBtn) {
-      if (paymentStatus !== "PAID" && remaining > 0) {
-        paymentBtn.style.display = "inline-block";
-        paymentBtn.onclick = () => {
-          const vm = bootstrap.Modal.getInstance(document.getElementById("viewReservationModal"));
-          if (vm) vm.hide();
-          openPaymentModal(r.reservationId);
-        };
-      } else {
-        paymentBtn.style.display = "none";
-      }
+      paymentBtn.style.display = "inline-block";
+      paymentBtn.onclick = () => {
+        const vm = bootstrap.Modal.getInstance(
+          document.getElementById("viewReservationModal")
+        );
+        if (vm) vm.hide();
+        openPaymentModal(r.reservationId);
+      };
     }
 
+    // Edit / Delete buttons
     document.getElementById("vEditBtn").onclick = () => {
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("viewReservationModal")).hide();
+      bootstrap.Modal
+        .getOrCreateInstance(document.getElementById("viewReservationModal"))
+        .hide();
       openEditReservationModal(id);
     };
 
     document.getElementById("vDeleteBtn").onclick = async () => {
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("viewReservationModal")).hide();
+      bootstrap.Modal
+        .getOrCreateInstance(document.getElementById("viewReservationModal"))
+        .hide();
       await deleteReservation(id);
     };
 
-    bootstrap.Modal.getOrCreateInstance(document.getElementById("viewReservationModal")).show();
+    // Load payment history into the view modal
+    loadPaymentHistoryIntoView(r.reservationId, totalAmount, amountPaid);
+
+    // Finally show the modal
+    bootstrap.Modal
+      .getOrCreateInstance(document.getElementById("viewReservationModal"))
+      .show();
 
   } catch (e) {
     showAlert("page", "Network error: " + e.message, "danger");
   }
 }
+
 
 async function openEditReservationModal(id) {
   const r = reservationsCache.find(x => Number(x.reservationId) === Number(id));
@@ -917,6 +934,65 @@ function loadPaymentHistory(reservationId) {
       if (tbodyEl) tbodyEl.innerHTML = `<tr><td colspan="4" class="text-danger">${escapeHtml(err.message)}</td></tr>`;
     });
 }
+
+function loadPaymentHistoryIntoView(reservationId, totalAmount, amountPaid) {
+  const body = document.getElementById("vPaymentHistoryBody");
+  const summary = document.getElementById("vPaySummary");
+
+  // Summary: Paid vs Remaining
+  if (summary) {
+    const remaining = round2(Number(totalAmount || 0) - Number(amountPaid || 0));
+    summary.textContent = `Paid: ${money(amountPaid || 0)} | Remaining: ${money(remaining)}`;
+  }
+
+  if (body) {
+    body.innerHTML = `<tr><td colspan="4" class="text-muted">Loading...</td></tr>`;
+  }
+
+  fetch(`${BASE}/api/payments/history?reservationId=${encodeURIComponent(reservationId)}`, {
+    credentials: "same-origin"
+  })
+    .then(async r => {
+      const txt = await r.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch (e) {}
+      if (!r.ok) throw new Error(data.message || "Failed to load payment history");
+      return data;
+    })
+    .then(data => {
+      if (!body) return;
+      body.innerHTML = "";
+
+      const payments = data.payments || [];
+      if (!payments.length) {
+        body.innerHTML = `<tr><td colspan="4" class="text-muted">No payments yet</td></tr>`;
+        return;
+      }
+
+      payments.forEach(p => {
+        const paidDate = p.paidDate ? new Date(p.paidDate) : null;
+        const dateText = (paidDate && !isNaN(paidDate.getTime()))
+          ? paidDate.toLocaleString()
+          : "-";
+        const amt = Number(p.paidAmount || 0);
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${escapeHtml(dateText)}</td>
+          <td class="text-end">${money(amt)}</td>
+          <td>${escapeHtml(p.method || "-")}</td>
+          <td>${escapeHtml(p.note || "-")}</td>
+        `;
+        body.appendChild(row);
+      });
+    })
+    .catch(err => {
+      if (body) {
+        body.innerHTML = `<tr><td colspan="4" class="text-danger">${escapeHtml(err.message)}</td></tr>`;
+      }
+    });
+}
+
 
 function savePayment() {
   hideAlert("payment");

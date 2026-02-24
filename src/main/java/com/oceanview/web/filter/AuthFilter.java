@@ -11,7 +11,6 @@ import java.io.IOException;
 @WebFilter("/*")
 public class AuthFilter implements Filter {
 
-    // check path start
     private boolean startsWith(String path, String... prefixes) {
         for (String p : prefixes) {
             if (path.startsWith(p)) return true;
@@ -19,12 +18,10 @@ public class AuthFilter implements Filter {
         return false;
     }
 
-    // admin check
     private boolean isAdmin(User u) {
         return u != null && "ADMIN".equalsIgnoreCase(u.getRole());
     }
 
-    // staff or admin check
     private boolean isStaffOrAdmin(User u) {
         if (u == null) return false;
         String r = u.getRole();
@@ -35,11 +32,11 @@ public class AuthFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        HttpServletRequest req = (HttpServletRequest) request;
+        HttpServletRequest req  = (HttpServletRequest) request;
         HttpServletResponse resp = (HttpServletResponse) response;
 
-        String ctx = req.getContextPath();
-        String uri = req.getRequestURI();
+        String ctx  = req.getContextPath();
+        String uri  = req.getRequestURI();
         String path = uri.substring(ctx.length());
 
         // public pages
@@ -52,6 +49,7 @@ public class AuthFilter implements Filter {
                 path.equals("/api/logout") ||
                 path.equals("/api/guest/login") ||
                 path.equals("/api/guest/logout") ||
+                path.equals("/api/flash") ||              
                 startsWith(path, "/assets/", "/partials/")
         ) {
             chain.doFilter(request, response);
@@ -60,10 +58,9 @@ public class AuthFilter implements Filter {
 
         HttpSession session = req.getSession(false);
 
-        User staffUser = null;
-        Guest guestUser = null;
+        User  staffUser  = null;
+        Guest guestUser  = null;
 
-        // session read
         if (session != null) {
             Object u = session.getAttribute("user");
             if (u instanceof User) staffUser = (User) u;

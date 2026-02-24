@@ -38,7 +38,7 @@ public class LogoutServlet extends HttpServlet {
         resp.addHeader("X-Clear-SessionStorage", "true");
 
         // redirect to login
-        resp.sendRedirect(req.getContextPath() + "/login.html");
+        resp.sendRedirect(req.getContextPath() + "/login.jsp");
     }
 
     @Override
