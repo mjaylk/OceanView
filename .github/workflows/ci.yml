@@ -44,9 +44,12 @@ jobs:
       - name: Create Schema
         run: mysql -h 127.0.0.1 -uroot -proot ocean_view_resort < src/test/resources/schema.sql
 
+      - name: Seed Test Data
+        run: mysql -h 127.0.0.1 -uroot -proot ocean_view_resort < src/test/resources/data.sql
+
       - name: Build and Test
         env:
-          DB_URL: jdbc:mysql://127.0.0.1:3306/ocean_view_resort?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC  
+          DB_URL: jdbc:mysql://127.0.0.1:3306/ocean_view_resort?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
           DB_USER: root
           DB_PASSWORD: root
         run: mvn -B clean package
