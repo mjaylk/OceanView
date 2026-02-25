@@ -521,7 +521,7 @@ public class ReservationService {
         String name  = (guestName == null || guestName.trim().isEmpty()) ? "Guest" : guestName.trim();
 
         String subject  = "OceanView Reservation Confirmation - " + nvl(r.getReservationNumber());
-        String baseUrl  = "http://localhost:5720/OceanViewResortBooking";
+        String baseUrl  = "http://localhost:8080/OceanViewResortBooking";
         String loginUrl = baseUrl + "/guest-login.html";
 
         StringBuilder body = new StringBuilder();
