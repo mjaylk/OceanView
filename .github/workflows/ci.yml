@@ -15,7 +15,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: oceanview
+          MYSQL_DATABASE: ocean_view_resort
         ports:
           - 3306:3306
         options: >-
@@ -41,5 +41,12 @@ jobs:
             sleep 2
           done
 
-      - name: Build (skip tests for now)
-        run: mvn -B clean package -DskipTests
+      - name: Create Schema
+        run: mysql -h 127.0.0.1 -uroot -proot ocean_view_resort < src/test/resources/schema.sql
+
+      - name: Build and Test
+        env:
+          DB_URL: jdbc:mysql://127.0.0.1:3306/ocean_view_resort?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC  
+          DB_USER: root
+          DB_PASSWORD: root
+        run: mvn -B clean package
