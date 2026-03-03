@@ -2,53 +2,90 @@
 
 ## Project Overview
 
-The Ocean View Resort Online Room Reservation System is a web-based application developed using Java Servlets, HTML, CSS, JavaScript, and MySQL.  
+The Ocean View Resort – Online Room Reservation System is a web-based application developed using Java Servlets, JSP, HTML, CSS, JavaScript, and MySQL.
 
-The system was designed to replace manual reservation handling with a computerized solution that improves accuracy, efficiency, and data consistency.
+The system replaces manual room reservation handling with a computerized solution that improves efficiency, accuracy, and data consistency. It allows administrators and staff members to manage rooms, guests, reservations, payments, and invoices through a centralized platform.
 
-This project was developed as part of the **Advanced Programming (CIS6003)** module.
+This project was developed as part of the Advanced Programming (CIS6003) module.
 
 ---
 
 ## Features
 
-The system provides the following functionalities:
+The system provides the following core functionalities:
 
 - User Authentication (Admin / Staff / Guest)
-- Room Management
+- Room Management (Add, Update, Delete, View)
 - Guest Management
 - Reservation Management
 - Reservation Payment Handling
 - Invoice Generation
-- System Settings Management
+- System Settings Configuration
+- Role-Based Access Control
 
 ---
 
 ## Technologies Used
 
-- **Backend:** Java V17 (Servlets, JDBC)
-- **Frontend:** HTML, CSS, JavaScript
-- **Database:** MySQL
-- **Server:** Apache Tomcat V9.0
-- **Version Control:** Git & GitHub
+- Backend: Java V17 (Servlets, JDBC)
+- Frontend: HTML, CSS, JavaScript, JSP
+- Database: MySQL
+- Server: Apache Tomcat V9.0
+- Build Tool: Maven
+- Version Control: Git & GitHub
 
 ---
 
 ## System Architecture
 
-The application follows a three-tier architecture:
+The application follows a layered three-tier architecture:
 
-1. **Presentation Layer** – HTML, CSS, JavaScript
-2. **Business Logic Layer** – Service Classes
-3. **Data Access Layer** – DAO Classes
+### 1. Presentation Layer
+- HTML
+- CSS
+- JavaScript
 
-Database interactions are handled through DAO classes using JDBC.
+### 2. Business Logic Layer
+- Service Interfaces
+- Service Implementations
+
+### 3. Data Access Layer
+- DAO Interfaces
+- DAO Implementations
+
+Database connectivity is managed using JDBC and a Singleton `DatabaseConnection` utility class.
+
+---
+
+## Project Structure
+
+```
+OceanViewReservationSystem/
+│
+├── src/main/java/
+│   ├── controller/        (Servlet Controllers)
+│   ├── service/           (Service Interfaces)
+│   ├── service/impl/      (Service Implementations)
+│   ├── dao/               (DAO Interfaces)
+│   ├── dao/impl/          (DAO Implementations)
+│   ├── model/             (Entity Classes)
+│   ├── util/              (Utility Classes)
+│   └── filter/            (Authentication Filters)
+│
+├── src/main/webapp/
+│   ├── css/
+│   ├── js/
+│   ├── views/
+│   └── WEB-INF/
+│
+└── pom.xml
+```
 
 ---
 
 ## Database Design
 
-The database consists of the following main tables:
+Main database tables:
 
 - users
 - guests
@@ -57,26 +94,83 @@ The database consists of the following main tables:
 - reservation_payments
 - settings
 
-Primary keys and foreign key relationships were implemented to ensure data integrity.
+Primary keys and foreign key relationships are implemented to maintain referential integrity.
 
 ---
 
 ## Design Patterns Used
 
-The system implements the following design patterns:
+- DAO Pattern – Separates persistence logic from business logic
+- Singleton Pattern – Used for DatabaseConnection management
+- MVC Pattern – Structured separation of concerns
 
-- **DAO Pattern** – Separation of persistence logic
-- **Singleton Pattern** – DatabaseConnection class
+---
+
+## How to Clone the Repository
+
+Clone the repository using Git:
+
+```bash
+git clone https://github.com/mjaylk/OceanView.git
+```
+
+Navigate into the project folder:
+
+```bash
+cd OceanView
+```
 
 ---
 
 ## How to Run the Project
 
-1. Import the project into Eclipse
-2. Configure Apache Tomcat Server
-3. Setup MySQL Database
-4. Update database credentials in `DatabaseConnection.java`
-5. Deploy and run the application
+### Step 1: Import the Project
+
+1. Open Eclipse IDE  
+2. Go to File → Import  
+3. Select Existing Maven Project  
+4. Choose the cloned project folder  
+5. Click Finish  
+
+### Step 2: Setup the Database
+
+Open MySQL and create a new database:
+
+```sql
+CREATE DATABASE oceanview_resort;
+```
+
+Import the provided SQL file if available.
+
+### Step 3: Configure Database Connection
+
+Open:
+
+```
+src/main/java/util/DatabaseConnection.java
+```
+
+Update the database credentials:
+
+```java
+private static final String URL = "jdbc:mysql://localhost:3306/oceanview_resort";
+private static final String USER = "root";
+private static final String PASSWORD = "your_password";
+```
+
+### Step 4: Configure Apache Tomcat
+
+1. Install Apache Tomcat 9  
+2. Add Tomcat Server in Eclipse  
+3. Deploy the project to the server  
+
+### Step 5: Run the Application
+
+Start the Tomcat server and open:
+
+```
+http://localhost:8080/OceanViewReservationSystem
+```
 
 ---
 
@@ -84,11 +178,13 @@ The system implements the following design patterns:
 
 This project demonstrates:
 
-- Object-Oriented Programming Concepts
-- Database Integration (JDBC)
-- Web-Based Application Development
-- UML Modelling
-- Version Control Practices
+- Object-Oriented Programming Principles
+- JDBC Database Integration
+- Layered Architecture Implementation
+- MVC Pattern in Web Applications
+- Role-Based Authentication and Authorization
+- Maven Project Structure
+- Version Control using Git
 
 ---
 
@@ -96,7 +192,6 @@ This project demonstrates:
 
 Developed by:
 
-**Vishwa**
-
-Advanced Programming Module  
+Vishwa  
+Advanced Programming (CIS6003)  
 ICBT Campus
