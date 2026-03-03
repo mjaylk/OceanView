@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanView Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/oceanview-dashboard.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0"><i class="fas fa-chart-bar me-2 text-primary"></i>Reports</h1>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-success me-2">Online</span>
+                <span class="me-3" id="reportDate"></span>
+                <i class="fas fa-bell fs-5 text-muted"></i>
+            </div>
+        </header>
+
+        <!-- Filter Bar -->
+        <div class="card mb-4">
+            <div class="card-body d-flex flex-wrap gap-3 align-items-end">
+                <div>
+                    <label class="form-label small text-muted mb-1">Report Type</label>
+                    <select class="form-select form-select-sm" id="reportType" onchange="loadReport()">
+                        <option value="reservations">Reservations</option>
+                        <option value="revenue">Revenue</option>
+                        <option value="occupancy">Occupancy</option>
+                        <option value="guests">Guests</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small text-muted mb-1">From</label>
+                    <input type="date" class="form-control form-control-sm" id="dateFrom">
+                </div>
+                <div>
+                    <label class="form-label small text-muted mb-1">To</label>
+                    <input type="date" class="form-control form-control-sm" id="dateTo">
+                </div>
+                <div>
+                    <button class="btn btn-primary btn-sm" onclick="loadReport()">
+                        <i class="fas fa-filter me-1"></i>Generate
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-1" onclick="exportReport()">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row mb-4" id="reportStats">
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon text-primary"><i class="fas fa-calendar-check"></i></div>
+                    <h3 class="text-primary mb-1" id="statTotal">—</h3>
+                    <p class="mb-0 text-muted">Total Reservations</p>
+                    <small class="text-success fw-bold" id="statTotalChange"></small>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon text-success"><i class="fas fa-dollar-sign"></i></div>
+                    <h3 class="text-success mb-1" id="statRevenue">—</h3>
+                    <p class="mb-0 text-muted">Total Revenue</p>
+                    <small class="text-success fw-bold" id="statRevenueChange"></small>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon text-warning"><i class="fas fa-bed"></i></div>
+                    <h3 class="text-warning mb-1" id="statOccupancy">—</h3>
+                    <p class="mb-0 text-muted">Avg Occupancy Rate</p>
+                    <small class="text-muted fw-bold" id="statOccupancyChange"></small>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon text-info"><i class="fas fa-users"></i></div>
+                    <h3 class="text-info mb-1" id="statGuests">—</h3>
+                    <p class="mb-0 text-muted">Unique Guests</p>
+                    <small class="text-success fw-bold" id="statGuestsChange"></small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-8 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3" id="mainChartTitle">Monthly Reservations</h5>
+                    <canvas id="mainReportChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="chart-container">
+                    <h5 class="mb-3">Room Type Breakdown</h5>
+                    <canvas id="roomTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" id="reportTableTitle">Report Details</h5>
+                        <span class="badge bg-secondary" id="reportRowCount">0 records</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="reportTable">
+                                <thead class="table-light">
+                                    <tr id="reportTableHead">
+                                        <th>Res. No</th>
+                                        <th>Guest</th>
+                                        <th>Room</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Status</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            <i class="fas fa-chart-bar me-2"></i>Select filters and click Generate
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="assets/js/layout.js"></script>
+<script src="assets/js/reports.js"></script>
+</body>
+</html>

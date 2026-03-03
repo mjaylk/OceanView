@@ -368,51 +368,73 @@ public class ReservationService {
   
     // DASHBOARD STATS
   
-    public String getDashboardStatsJson(int days) {
-        if (days <= 0) days = 30;
+public String getDashboardStatsJson(int days) {
+    if (days <= 0) days = 30;
 
-        LocalDate today    = LocalDate.now();
-        LocalDate startLd  = today.minusDays(days - 1);
-        Date start         = Date.valueOf(startLd);
-        Date end           = Date.valueOf(today);
+    LocalDate today   = LocalDate.now();
+    LocalDate startLd = today.minusDays(days - 1);
+    Date start        = Date.valueOf(startLd);
+    Date end          = Date.valueOf(today);
 
-        int totalReservations = dao.countBetween(start, end);
+    int totalReservations   = dao.countBetween(start, end);
+    LocalDate monthStartLd  = today.withDayOfMonth(1);
+    Date monthStart         = Date.valueOf(monthStartLd);
+    double revenueThisMonth = dao.sumRevenueBetween(monthStart, end);
 
-        LocalDate monthStartLd   = today.withDayOfMonth(1);
-        Date monthStart          = Date.valueOf(monthStartLd);
-        double revenueThisMonth  = dao.sumRevenueBetween(monthStart, end);
+    //  unique guests & occupancy 
+    List<Reservation> allInRange = dao.findBetween(start, end);
 
-        // build empty daily series
-        LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
-        for (int i = 0; i < days; i++) {
-            map.put(startLd.plusDays(i).toString(), 0);
+    java.util.Set<Integer> uniqueGuestIds = new java.util.HashSet<>();
+    int activeCount = 0;
+
+    for (Reservation r : allInRange) {
+        if (r.getGuestId() > 0) uniqueGuestIds.add(r.getGuestId());
+
+        String s = r.getStatus() == null ? "" : r.getStatus().trim().toUpperCase();
+        if (s.equals("CONFIRMED") || s.equals("CHECKED_IN") || s.equals("BOOKED")) {
+            activeCount++;
         }
-
-        // fill from DB
-        List<ReservationDailyCount> rows = dao.countPerDayBetween(start, end);
-        for (ReservationDailyCount row : rows) {
-            if (row == null || row.getDay() == null) continue;
-            String key = row.getDay().toString();
-            if (map.containsKey(key)) map.put(key, row.getCount());
-        }
-
-        // build JSON
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"success\":true,");
-        sb.append("\"totalReservations\":").append(totalReservations).append(",");
-        sb.append("\"revenueThisMonth\":").append(String.format(Locale.US, "%.2f", revenueThisMonth)).append(",");
-        sb.append("\"series\":[");
-
-        int i = 0;
-        for (Map.Entry<String, Integer> e : map.entrySet()) {
-            sb.append("{\"label\":\"").append(e.getKey()).append("\",\"count\":").append(e.getValue()).append("}");
-            if (i < map.size() - 1) sb.append(",");
-            i++;
-        }
-
-        sb.append("]}");
-        return sb.toString();
     }
+
+    int uniqueGuests = uniqueGuestIds.size();
+    double occupancyRate = allInRange.isEmpty()
+            ? 0.0
+            : round2((activeCount * 100.0) / allInRange.size());
+   
+
+    // build empty daily series
+    LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
+    for (int i = 0; i < days; i++) {
+        map.put(startLd.plusDays(i).toString(), 0);
+    }
+
+    // fill from DB
+    List<ReservationDailyCount> rows = dao.countPerDayBetween(start, end);
+    for (ReservationDailyCount row : rows) {
+        if (row == null || row.getDay() == null) continue;
+        String key = row.getDay().toString();
+        if (map.containsKey(key)) map.put(key, row.getCount());
+    }
+
+    // build JSON
+    StringBuilder sb = new StringBuilder();
+    sb.append("{\"success\":true,");
+    sb.append("\"totalReservations\":").append(totalReservations).append(",");
+    sb.append("\"revenueThisMonth\":").append(String.format(Locale.US, "%.2f", revenueThisMonth)).append(",");
+    sb.append("\"uniqueGuests\":").append(uniqueGuests).append(",");                          // NEW
+    sb.append("\"occupancyRate\":\"").append(String.format(Locale.US, "%.1f", occupancyRate)).append("\","); // NEW
+    sb.append("\"series\":[");
+
+    int i = 0;
+    for (Map.Entry<String, Integer> e : map.entrySet()) {
+        sb.append("{\"label\":\"").append(e.getKey()).append("\",\"count\":").append(e.getValue()).append("}");
+        if (i < map.size() - 1) sb.append(",");
+        i++;
+    }
+
+    sb.append("]}");
+    return sb.toString();
+}
 
  
     // PRIVATE HELPERS

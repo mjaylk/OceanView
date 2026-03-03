@@ -225,22 +225,24 @@ public class ReservationServlet extends HttpServlet {
             Reservation r = list.get(i);
 
             sb.append("{")
-                    .append("\"reservationId\":").append(r.getReservationId()).append(",")
-                    .append("\"reservationNumber\":\"").append(esc(r.getReservationNumber())).append("\",")
-                    .append("\"guestId\":").append(r.getGuestId()).append(",")
-                    .append("\"roomId\":").append(r.getRoomId()).append(",")
-                    .append("\"checkInDate\":\"").append(r.getCheckInDate()).append("\",")
-                    .append("\"checkOutDate\":\"").append(r.getCheckOutDate()).append("\",")
-                    .append("\"status\":\"").append(esc(r.getStatus())).append("\",")
-                    .append("\"nights\":").append(r.getNights()).append(",")
-                    .append("\"totalAmount\":").append(r.getTotalAmount()).append(",")
-                    .append("\"guestName\":\"").append(esc(r.getGuestName())).append("\",")
-                    .append("\"guestEmail\":\"").append(esc(r.getGuestEmail())).append("\",")
-                    .append("\"guestContactNumber\":\"").append(esc(r.getGuestContactNumber())).append("\",")
-                    .append("\"roomNumber\":\"").append(esc(r.getRoomNumber())).append("\",")
-                    .append("\"amountPaid\":").append(r.getAmountPaid()).append(",")
-                    .append("\"paymentStatus\":\"").append(esc(r.getPaymentStatus())).append("\"")
-                    .append("}");
+            .append("\"reservationId\":").append(r.getReservationId()).append(",")
+            .append("\"reservationNumber\":\"").append(esc(r.getReservationNumber())).append("\",")
+            .append("\"guestId\":").append(r.getGuestId()).append(",")
+            .append("\"roomId\":").append(r.getRoomId()).append(",")
+            .append("\"checkInDate\":\"").append(r.getCheckInDate()).append("\",")
+            .append("\"checkOutDate\":\"").append(r.getCheckOutDate()).append("\",")
+            .append("\"status\":\"").append(esc(r.getStatus())).append("\",")
+            .append("\"nights\":").append(r.getNights()).append(",")
+            .append("\"totalAmount\":").append(r.getTotalAmount()).append(",")
+            .append("\"guestName\":\"").append(esc(r.getGuestName())).append("\",")
+            .append("\"guestEmail\":\"").append(esc(r.getGuestEmail())).append("\",")
+            .append("\"guestContactNumber\":\"").append(esc(r.getGuestContactNumber())).append("\",")
+            .append("\"roomNumber\":\"").append(esc(r.getRoomNumber())).append("\",")
+            .append("\"roomType\":\"").append(esc(r.getRoomType())).append("\",")  // ADD THIS
+            .append("\"amountPaid\":").append(r.getAmountPaid()).append(",")
+            .append("\"paymentStatus\":\"").append(esc(r.getPaymentStatus())).append("\"")
+            .append("}");
+
 
             if (i < list.size() - 1) sb.append(",");
         }
